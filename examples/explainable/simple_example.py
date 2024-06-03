@@ -66,3 +66,11 @@ print(refute)
 
 # Example interpretation
 print(f"Causal Estimate: {estimate.value}")
+
+# For example, if the estimate for credit_score is negative, it indicates that higher credit scores reduce the likelihood of defaulting on a loan.
+if 'credit_score' in estimate.params:
+    credit_score_effect = estimate.params['credit_score']
+    if credit_score_effect < 0:
+        print("Higher credit scores reduce the likelihood of defaulting on a loan.")
+    else:
+        print("Higher credit scores increase the likelihood of defaulting on a loan.")
