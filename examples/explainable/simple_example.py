@@ -41,37 +41,28 @@ predicted_default = model.predict([test_instance])[0]
 print(f"Predicted Default: {predicted_default}")
 
 # Create a causal model
-model = CausalModel(
+causal_model = CausalModel(
     data=df,
-    treatment=['credit_score', 'income', 'loan_amount', 'employment_status'],
+    treatment=['credit_score', 'income', 'employment_status'],
     outcome='loan_default',
-    graph="digraph { credit_score -> loan_default; income -> loan_default; loan_amount -> loan_default; employment_status -> loan_default; income -> loan_amount; credit_score -> loan_amount; }"
+    graph="digraph { credit_score -> loan_default; income -> loan_default; employment_status -> loan_default; employment_status -> loan_amount; income -> loan_amount; credit_score -> loan_amount; }"
 )
 
 # Visualize the causal graph
-model.view_model(layout="dot")
+causal_model.view_model(layout="dot")
 
 # Identify causal effect
-identified_estimand = model.identify_effect(proceed_when_unidentifiable=True)
+identified_estimand = causal_model.identify_effect(proceed_when_unidentifiable=True)
 print(identified_estimand)
 
-# Estimate causal effect
-estimate = model.estimate_effect(identified_estimand,
-                                 method_name="backdoor.propensity_score_matching")
+# Estimate causal effect using Linear Regression Estimator
+estimate = causal_model.estimate_effect(identified_estimand,
+                                        method_name="backdoor.linear_regression")
 print(estimate)
 
 # Refute the estimate
-refute = model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter")
+refute = causal_model.refute_estimate(identified_estimand, estimate, method_name="placebo_treatment_refuter")
 print(refute)
 
 # Example interpretation
 print(f"Causal Estimate: {estimate.value}")
-
-# For example, if the estimate for credit_score is negative, it indicates that higher credit scores reduce the likelihood of defaulting on a loan.
-if 'credit_score' in estimate.params:
-    credit_score_effect = estimate.params['credit_score']
-    if credit_score_effect < 0:
-        print("Higher credit scores reduce the likelihood of defaulting on a loan.")
-    else:
-        print("Higher credit scores increase the likelihood of defaulting on a loan.")
-
