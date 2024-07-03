@@ -1,4 +1,6 @@
 site_name: applyBN
+repo_name: Anaxagor/applyBN/
+repo_url: https://github.com/Anaxagor/applyBN/
 theme:
   name: material
   locale: en
