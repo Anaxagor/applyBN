@@ -1,20 +1,30 @@
-site_name: My Project
+site_name: applyBN
 theme:
   name: material
   locale: en
   palette:
-    # Palette toggle for light mode
-  - media: "(prefers-color-scheme: light)"
-    scheme: default
-    toggle:
-      icon: material/brightness-7
-      name: Switch to dark mode
-# Palette toggle for dark mode
-  - media: "(prefers-color-scheme: dark)"
-    scheme: slate
-    toggle:
-      icon: material/brightness-4
-      name: Switch to light mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
