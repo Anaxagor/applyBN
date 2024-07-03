@@ -65,8 +65,10 @@ nav:
 #      link: https://github.com/myusername/myproject
 markdown_extensions:
   - admonition
+  - mkdocstrings
   - codehilite
   - footnotes
   - meta
+  - search
   - toc:
       permalink: True
