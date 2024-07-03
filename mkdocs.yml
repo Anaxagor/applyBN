@@ -1,0 +1,18 @@
+site_name: My Project
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Installation: installation.md
+#extra:
+#  social:
+#    - icon: fontawesome/brands/github
+#      link: https://github.com/myusername/myproject
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: True
