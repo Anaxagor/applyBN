@@ -1,3 +1,3 @@
 # Logger
 
-::: core.logger
+::: applybn.core.logger
