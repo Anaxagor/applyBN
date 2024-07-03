@@ -66,6 +66,7 @@ nav:
 #    - icon: fontawesome/brands/github
 #      link: https://github.com/myusername/myproject
 plugins:
+  - search
   - mkdocstrings
 markdown_extensions:
   - admonition
