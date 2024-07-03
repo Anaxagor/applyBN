@@ -1,4 +1,10 @@
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 
 class ProgressBar:
@@ -29,7 +35,7 @@ class ProgressBar:
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
-            TimeRemainingColumn()
+            TimeRemainingColumn(),
         )
         self.task_id = None
 

@@ -5,6 +5,7 @@ from rich.traceback import install
 console = Console()
 install(console=console)
 
+
 class LibraryError(Exception):
     """
     Base class for all exceptions raised by the library.
@@ -18,11 +19,13 @@ class LibraryError(Exception):
         >>> except LibraryError as e:
         >>>     print(f"Caught an exception: {e}")
     """
+
     def __init__(self, message=None):
         if message is None:
             message = "An error occurred in applybn."
         super().__init__(message)
         console.print_exception()
+
 
 class InvalidInputError(LibraryError):
     """
@@ -37,11 +40,13 @@ class InvalidInputError(LibraryError):
         >>> except InvalidInputError as e:
         >>>     print(f"Caught an exception: {e}")
     """
+
     def __init__(self, message=None):
         if message is None:
             message = "Invalid input provided."
         super().__init__(message)
         console.print_exception()
+
 
 class OperationFailedError(LibraryError):
     """
@@ -56,11 +61,13 @@ class OperationFailedError(LibraryError):
         >>> except OperationFailedError as e:
         >>>     print(f"Caught an exception: {e}")
     """
+
     def __init__(self, message=None):
         if message is None:
             message = "The operation failed to complete successfully."
         super().__init__(message)
         console.print_exception()
+
 
 class ResourceNotFoundError(LibraryError):
     """
@@ -75,6 +82,7 @@ class ResourceNotFoundError(LibraryError):
         >>> except ResourceNotFoundError as e:
         >>>     print(f"Caught an exception: {e}")
     """
+
     def __init__(self, message=None):
         if message is None:
             message = "The requested resource was not found."
