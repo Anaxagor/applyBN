@@ -65,9 +65,10 @@ nav:
 #  social:
 #    - icon: fontawesome/brands/github
 #      link: https://github.com/myusername/myproject
+plugins:
+  - mkdocstrings
 markdown_extensions:
   - admonition
-  - mkdocstrings
   - codehilite
   - footnotes
   - meta
