@@ -1,6 +1,20 @@
 site_name: My Project
 theme:
   name: material
+  locale: en
+  palette:
+    # Palette toggle for light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
+# Palette toggle for dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
