@@ -72,6 +72,5 @@ markdown_extensions:
   - codehilite
   - footnotes
   - meta
-  - search
   - toc:
       permalink: True
