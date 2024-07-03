@@ -60,7 +60,7 @@ nav:
   - Getting Started: getting-started.md
   - Installation: installation.md
   - API Reference:
-      - logger: api_reference/logger.md
+      - logger: reference/
 #extra:
 #  social:
 #    - icon: fontawesome/brands/github
