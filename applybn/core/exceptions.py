@@ -2,8 +2,8 @@ from rich.console import Console
 from rich.traceback import install
 
 # Initialize the console for rich
-console = Console()
-install(console=console)
+# console = Console()
+# install(console=console)
 
 
 class LibraryError(Exception):
