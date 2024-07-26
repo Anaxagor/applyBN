@@ -37,6 +37,7 @@ class Explainer(ABC):
         plot_uncertainties(): Plots the uncertainties vs. predictions.
         get_confidences(): Returns the confidence values.
         get_uncertainties(): Returns the uncertainty values.
+        build_causal_graph_with_confidence(): Builds a causal graph with confidence as an additional node and estimates the influence of each feature on confidence.
 
     Example:
         >>> base_algo = LinearRegression()
@@ -50,15 +51,8 @@ class Explainer(ABC):
         >>> explainer.plot_feature_importance()
     """
 
-    def __init__(
-        self,
-        base_algo: BaseEstimator,
-        data: pd.DataFrame,
-        treatment: str,
-        outcome: str,
-        common_causes: list,
-        n_splits: int = 5,
-    ):
+    def __init__(self, base_algo: BaseEstimator, data: pd.DataFrame, treatment: str, outcome: str, common_causes: list,
+                 n_splits: int = 5):
         self.base_algo = base_algo
         self.data = data
         self.treatment = treatment
@@ -74,7 +68,10 @@ class Explainer(ABC):
 
         # Initialize the causal model
         self.causal_model = CausalModel(
-            data=data, treatment=treatment, outcome=outcome, common_causes=common_causes
+            data=data,
+            treatment=treatment,
+            outcome=outcome,
+            common_causes=common_causes
         )
 
     def fit_predict(self):
@@ -85,12 +82,11 @@ class Explainer(ABC):
             np.ndarray: The predicted values.
         """
         # Identify causal effect
-        identified_estimand = self.causal_model.identify_effect(
-            proceed_when_unidentifiable=True
-        )
+        identified_estimand = self.causal_model.identify_effect(proceed_when_unidentifiable=True)
         # Estimate causal effect
         causal_estimate = self.causal_model.estimate_effect(
-            identified_estimand, method_name="backdoor.linear_regression"
+            identified_estimand,
+            method_name="backdoor.linear_regression"
         )
         self.model = causal_estimate.estimator.model
         # Make predictions using both common causes and the treatment variable
@@ -115,14 +111,10 @@ class Explainer(ABC):
         Returns:
             np.ndarray: Feature importance values.
         """
-        if hasattr(self.model, "params"):
-            self.feature_importance_ = np.abs(
-                self.model.params[1:]
-            )  # Exclude the intercept
+        if hasattr(self.model, 'params'):
+            self.feature_importance_ = np.abs(self.model.params[1:])  # Exclude the intercept
         else:
-            raise NotImplementedError(
-                "Feature importance is not implemented for this model type."
-            )
+            raise NotImplementedError("Feature importance is not implemented for this model type.")
         return self.feature_importance_
 
     def get_shap_values(self):
@@ -137,9 +129,7 @@ class Explainer(ABC):
             data = sm.add_constant(data)
             return self.model.predict(data)
 
-        explainer = shap.Explainer(
-            model_predict, self.data[self.common_causes + [self.treatment]]
-        )
+        explainer = shap.Explainer(model_predict, self.data[self.common_causes + [self.treatment]])
         self.shap_values_ = explainer(self.data[self.common_causes + [self.treatment]])
         return self.shap_values_
 
@@ -150,9 +140,9 @@ class Explainer(ABC):
         if self.feature_importance_ is None:
             self.get_feature_importance()
         plt.bar(self.common_causes + [self.treatment], self.feature_importance_)
-        plt.xlabel("Features")
-        plt.ylabel("Importance")
-        plt.title("Feature Importance")
+        plt.xlabel('Features')
+        plt.ylabel('Importance')
+        plt.title('Feature Importance')
         plt.show()
 
     def plot_shap_values(self):
@@ -161,9 +151,7 @@ class Explainer(ABC):
         """
         if self.shap_values_ is None:
             self.get_shap_values()
-        shap.summary_plot(
-            self.shap_values_, self.data[self.common_causes + [self.treatment]]
-        )
+        shap.summary_plot(self.shap_values_, self.data[self.common_causes + [self.treatment]])
 
     def plot_confidences(self):
         """
@@ -172,9 +160,9 @@ class Explainer(ABC):
         if self.confidences is None:
             raise ValueError("Confidences have not been calculated.")
         plt.scatter(self.predictions, self.confidences)
-        plt.xlabel("Predictions")
-        plt.ylabel("Confidences")
-        plt.title("Confidences vs Predictions")
+        plt.xlabel('Predictions')
+        plt.ylabel('Confidences')
+        plt.title('Confidences vs Predictions')
         plt.show()
 
     def plot_uncertainties(self):
@@ -184,9 +172,9 @@ class Explainer(ABC):
         if self.uncertainties is None:
             raise ValueError("Uncertainties have not been calculated.")
         plt.scatter(self.predictions, self.uncertainties)
-        plt.xlabel("Predictions")
-        plt.ylabel("Uncertainties")
-        plt.title("Uncertainties vs Predictions")
+        plt.xlabel('Predictions')
+        plt.ylabel('Uncertainties')
+        plt.title('Uncertainties vs Predictions')
         plt.show()
 
     def get_confidences(self):
@@ -206,3 +194,42 @@ class Explainer(ABC):
             np.ndarray: Uncertainty values.
         """
         return self.uncertainties
+
+    def build_causal_graph_with_confidence(self):
+        """
+        Builds a causal graph with confidence as an additional node and estimates the influence of each feature on confidence.
+
+        Returns:
+            dict: The estimated causal effect of each feature on confidence.
+        """
+        # Add confidence to the dataset
+        self.data['confidence'] = self.confidences
+
+        # Define a new causal model including confidence as a node
+        causal_model_with_confidence = CausalModel(
+            data=self.data,
+            treatment=self.common_causes + [self.treatment],
+            outcome='confidence',
+            common_causes=[]
+        )
+
+        # Identify causal effect on confidence
+        identified_estimand = causal_model_with_confidence.identify_effect(proceed_when_unidentifiable=True)
+
+        # Estimate causal effect
+        causal_estimate = causal_model_with_confidence.estimate_effect(
+            identified_estimand,
+            method_name="backdoor.linear_regression"
+        )
+
+        # Extract and return causal effects
+        causal_effects = {}
+        for feature in self.common_causes + [self.treatment]:
+            effect = causal_model_with_confidence.estimate_effect(
+                identified_estimand,
+                method_name="backdoor.linear_regression",
+                target_units=feature
+            )
+            causal_effects[feature] = effect.value
+
+        return causal_effects
