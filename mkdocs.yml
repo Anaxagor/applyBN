@@ -57,8 +57,8 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Installation: installation.md
+  - Getting Started: user-guide/getting-started.md
+  - Installation: user-guide/installation.md
   - API Reference:
       - logger: reference/logger.md
 #extra:
