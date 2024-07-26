@@ -34,7 +34,10 @@ class RegressorExplainer(Explainer):
             test_data = self.data.iloc[test_index]
 
             # Fit the model
-            model = self.base_algo.fit(train_data[self.common_causes + [self.treatment]], train_data[self.outcome])
+            model = self.base_algo.fit(
+                train_data[self.common_causes + [self.treatment]],
+                train_data[self.outcome],
+            )
             preds = model.predict(test_data[self.common_causes + [self.treatment]])
             predictions[test_index] = preds
 
