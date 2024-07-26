@@ -34,13 +34,18 @@ class ClassifierExplainer(Explainer):
             test_data = self.data.iloc[test_index]
 
             # Fit the model
-            model = self.base_algo.fit(train_data[self.common_causes + [self.treatment]], train_data[self.outcome])
+            model = self.base_algo.fit(
+                train_data[self.common_causes + [self.treatment]],
+                train_data[self.outcome],
+            )
             preds = model.predict(test_data[self.common_causes + [self.treatment]])
             predictions[test_index] = preds
 
             # Calculate confidence using predict_proba if available
-            if hasattr(model, 'predict_proba'):
-                proba_preds = model.predict_proba(test_data[self.common_causes + [self.treatment]])
+            if hasattr(model, "predict_proba"):
+                proba_preds = model.predict_proba(
+                    test_data[self.common_causes + [self.treatment]]
+                )
                 conf = np.max(proba_preds, axis=1)
             else:
                 residuals = test_data[self.outcome] - preds

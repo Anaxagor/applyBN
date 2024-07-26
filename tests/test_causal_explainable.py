@@ -13,29 +13,35 @@ class TestExplainers(unittest.TestCase):
     def setUp(self):
         # Setup common data for regression and classification tests
         self.regression_data = pd.DataFrame(
-            np.random.randn(100, 7), columns=[f'feature_{i}' for i in range(5)] + ['treatment', 'outcome']
+            np.random.randn(100, 7),
+            columns=[f"feature_{i}" for i in range(5)] + ["treatment", "outcome"],
         )
         X, y = make_regression(n_samples=100, n_features=5, noise=0.1)
         self.regression_data.iloc[:, :5] = X
-        self.regression_data['treatment'] = np.random.rand(100)
-        self.regression_data['outcome'] = y
+        self.regression_data["treatment"] = np.random.rand(100)
+        self.regression_data["outcome"] = y
 
         self.classification_data = pd.DataFrame(
-            np.random.randn(100, 7), columns=[f'feature_{i}' for i in range(5)] + ['treatment', 'outcome']
+            np.random.randn(100, 7),
+            columns=[f"feature_{i}" for i in range(5)] + ["treatment", "outcome"],
         )
-        X, y = make_classification(n_samples=100, n_features=5, n_classes=2, random_state=42)
+        X, y = make_classification(
+            n_samples=100, n_features=5, n_classes=2, random_state=42
+        )
         self.classification_data.iloc[:, :5] = X
-        self.classification_data['treatment'] = np.random.randint(2, size=100)
-        self.classification_data['outcome'] = y
+        self.classification_data["treatment"] = np.random.randint(2, size=100)
+        self.classification_data["outcome"] = y
 
     def test_regressor_explainer(self):
-        treatment = 'treatment'
-        outcome = 'outcome'
-        common_causes = [f'feature_{i}' for i in range(5)]
+        treatment = "treatment"
+        outcome = "outcome"
+        common_causes = [f"feature_{i}" for i in range(5)]
 
         # Initialize and test the RegressorExplainer
         base_algo = LinearRegression()
-        regressor_explainer = RegressorExplainer(base_algo, self.regression_data, treatment, outcome, common_causes)
+        regressor_explainer = RegressorExplainer(
+            base_algo, self.regression_data, treatment, outcome, common_causes
+        )
         predictions = regressor_explainer.fit_predict()
 
         self.assertEqual(len(predictions), 100)
@@ -51,13 +57,15 @@ class TestExplainers(unittest.TestCase):
         regressor_explainer.plot_uncertainties()
 
     def test_classifier_explainer(self):
-        treatment = 'treatment'
-        outcome = 'outcome'
-        common_causes = [f'feature_{i}' for i in range(5)]
+        treatment = "treatment"
+        outcome = "outcome"
+        common_causes = [f"feature_{i}" for i in range(5)]
 
         # Initialize and test the ClassifierExplainer
         base_algo = LogisticRegression()
-        classifier_explainer = ClassifierExplainer(base_algo, self.classification_data, treatment, outcome, common_causes)
+        classifier_explainer = ClassifierExplainer(
+            base_algo, self.classification_data, treatment, outcome, common_causes
+        )
         predictions = classifier_explainer.fit_predict()
 
         self.assertEqual(len(predictions), 100)
@@ -72,5 +80,6 @@ class TestExplainers(unittest.TestCase):
         classifier_explainer.plot_confidences()
         classifier_explainer.plot_uncertainties()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
