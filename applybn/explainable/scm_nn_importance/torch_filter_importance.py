@@ -21,6 +21,15 @@ class FilterImportanceSCM:
         self.filter_responses = {}
         self.transformations = {}
         self.regressors = {}
+        self.conv_layers = self.get_conv_layers()
+
+    def get_conv_layers(self):
+        """Retrieve all convolutional layers from the model."""
+        conv_layers = []
+        for layer in self.model.children():
+            if isinstance(layer, nn.Conv2d):
+                conv_layers.append(layer)
+        return conv_layers
 
     def extract_filter_responses(self):
         """Extract filter responses from each convolutional layer in the model."""
@@ -32,9 +41,8 @@ class FilterImportanceSCM:
             self.filter_responses[module].append(output.cpu().numpy())
 
         # Register hooks for each convolutional layer
-        for layer in self.model.children():
-            if isinstance(layer, nn.Conv2d):
-                hooks.append(layer.register_forward_hook(hook_fn))
+        for layer in self.conv_layers:
+            hooks.append(layer.register_forward_hook(hook_fn))
 
         self.model.eval()
         with torch.no_grad():
@@ -81,10 +89,9 @@ class FilterImportanceSCM:
         list: List of parent layers.
         """
         parents = []
-        if layer == self.model.conv2:
-            parents.append(self.model.conv1)
-        elif layer == self.model.conv3:
-            parents.append(self.model.conv2)
+        layer_index = self.conv_layers.index(layer)
+        if layer_index > 0:
+            parents.append(self.conv_layers[layer_index - 1])
         return parents
 
     def predict_importance(self, layer):

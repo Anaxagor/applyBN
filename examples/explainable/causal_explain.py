@@ -8,17 +8,19 @@ from applybn.explainable.causal_explain import RegressorExplainer, ClassifierExp
 
 # Generate a synthetic dataset for regression
 X, y = make_regression(n_samples=100, n_features=5, noise=0.1)
-data = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(5)])
-data['treatment'] = np.random.rand(100)  # Add a continuous treatment variable
-data['outcome'] = y
+data = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(5)])
+data["treatment"] = np.random.rand(100)  # Add a continuous treatment variable
+data["outcome"] = y
 
-treatment = 'treatment'
-outcome = 'outcome'
-common_causes = [f'feature_{i}' for i in range(5)]
+treatment = "treatment"
+outcome = "outcome"
+common_causes = [f"feature_{i}" for i in range(5)]
 
 # Initialize and test the RegressorExplainer
 base_algo = LinearRegression()
-regressor_explainer = RegressorExplainer(base_algo, data, treatment, outcome, common_causes)
+regressor_explainer = RegressorExplainer(
+    base_algo, data, treatment, outcome, common_causes
+)
 predictions = regressor_explainer.fit_predict()
 print("Feature Importance (Regression):", regressor_explainer.get_feature_importance())
 print("SHAP Values (Regression):", regressor_explainer.get_shap_values())
@@ -39,19 +41,24 @@ from sklearn.datasets import make_classification
 
 # Generate a synthetic dataset for classification
 X, y = make_classification(n_samples=100, n_features=5, n_classes=2, random_state=42)
-data = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(5)])
-data['treatment'] = np.random.randint(2, size=100)  # Add a binary treatment variable
-data['outcome'] = y
+data = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(5)])
+data["treatment"] = np.random.randint(2, size=100)  # Add a binary treatment variable
+data["outcome"] = y
 
-treatment = 'treatment'
-outcome = 'outcome'
-common_causes = [f'feature_{i}' for i in range(5)]
+treatment = "treatment"
+outcome = "outcome"
+common_causes = [f"feature_{i}" for i in range(5)]
 
 # Initialize and test the ClassifierExplainer
 base_algo = LogisticRegression()
-classifier_explainer = ClassifierExplainer(base_algo, data, treatment, outcome, common_causes)
+classifier_explainer = ClassifierExplainer(
+    base_algo, data, treatment, outcome, common_causes
+)
 predictions_classes = classifier_explainer.fit_predict()
-print("Feature Importance (Classification):", classifier_explainer.get_feature_importance())
+print(
+    "Feature Importance (Classification):",
+    classifier_explainer.get_feature_importance(),
+)
 print("SHAP Values (Classification):", classifier_explainer.get_shap_values())
 print("Confidences (Classification):", classifier_explainer.get_confidences())
 print("Uncertainties (Classification):", classifier_explainer.get_uncertainties())

@@ -31,9 +31,15 @@ class SmallCNN(nn.Module):
 
 
 # Main experiment
-transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-trainset = datasets.CIFAR10(root='../../data', train=True, download=True, transform=transform)
-testset = datasets.CIFAR10(root='../../data', train=False, download=True, transform=transform)
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+)
+trainset = datasets.CIFAR10(
+    root="../../data", train=True, download=True, transform=transform
+)
+testset = datasets.CIFAR10(
+    root="../../data", train=False, download=True, transform=transform
+)
 trainloader = DataLoader(trainset, batch_size=100, shuffle=True, num_workers=2)
 testloader = DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
 
@@ -115,11 +121,13 @@ for i in range(pruning_iterations):
     print(f"  Accuracy (Random): {accuracy_random}")
 
 # Plot accuracy vs percent of filters pruned
-plt.plot(percent_pruned, accuracies_importance, marker='o', label='Importance-based Pruning')
-plt.plot(percent_pruned, accuracies_random, marker='x', label='Random Pruning')
-plt.xlabel('Percent of Filters Pruned')
-plt.ylabel('Accuracy')
-plt.title('Accuracy vs Percent of Filters Pruned')
+plt.plot(
+    percent_pruned, accuracies_importance, marker="o", label="Importance-based Pruning"
+)
+plt.plot(percent_pruned, accuracies_random, marker="x", label="Random Pruning")
+plt.xlabel("Percent of Filters Pruned")
+plt.ylabel("Accuracy")
+plt.title("Accuracy vs Percent of Filters Pruned")
 plt.legend()
 plt.grid(True)
 plt.show()
