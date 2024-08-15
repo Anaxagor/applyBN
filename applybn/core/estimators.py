@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+# from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
 from bamt.networks import DiscreteBN, HybridBN, ContinuousBN
+from bamt.nodes.base import BaseNode
+from bamt.nodes.discrete_node import DiscreteNode
 
-from typing import Unpack, Literal
+from typing import Unpack, Literal, Type
 from applybn.core.schema import ParamDict
 
 
@@ -25,8 +27,7 @@ class BNEstimator(BaseEstimator):
         self.has_logit = has_logit
         self.use_mixture = use_mixture
         self.bn_type = bn_type
-        # self.has_continuous_data = has_continuous_data
-        # self.target_name = target_name
+
         # we're assuming here that anomaly node is always disc, thus cont_bn cannot be here
         # todo: hardcode
         match bn_type:
@@ -82,8 +83,45 @@ class BNEstimator(BaseEstimator):
             try:
                 result = self.bn.get_dist("y", pvals=row.to_dict())[0]
             except KeyError:
-                print("Break")
                 result = np.nan
             probas.append(result)
 
         return pd.Series(probas)
+
+    def inject_target(self,
+                      y,
+                      data,
+                      node: Type[BaseNode] = DiscreteNode):
+        if not self.bn.edges:
+            # todo
+            raise Exception
+        if not isinstance(y, pd.Series):
+            # todo
+            raise Exception
+        if not issubclass(node, BaseNode):
+            # todo
+            raise Exception
+
+        normal_structure = self.bn.edges
+        info = self.bn.descriptor
+        nodes = self.bn.nodes
+        target_name = str(y.name)
+
+        bl_add = [(target_name, node_name) for node_name in self.bn.nodes_names]
+        nodes += [node(target_name)]
+
+        info["types"] |= {target_name: "disc"}
+        info["signs"] = {".0": "mimic value to bypass broken check in bamt"}
+
+        self.bn.add_nodes(descriptor=info)
+
+        data[target_name] = y.to_numpy()
+
+        # noinspection PyTypeChecker
+        self.bn.add_edges(data=data,
+                          params={"init_edges": list(map(tuple, normal_structure)),
+                                  "bl_add": bl_add,
+                                  "remove_init_edges": False}
+                          )
+
+        return self

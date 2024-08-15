@@ -1,4 +1,5 @@
-from typing import TypedDict, Optional, Sequence, Tuple, List, Union, Callable
+from typing import TypedDict, Optional, Sequence, Tuple, List, Union, Callable, TypeVar
+from applybn.anomaly_detection.scores.score import Score
 
 
 class StructureLearnerParams(TypedDict, total=False):
@@ -16,3 +17,6 @@ class ParamDict(TypedDict, total=False):
     regressor: Optional[object]
     params: Optional[StructureLearnerParams]
     optimizer: str
+
+
+scores = TypeVar("scores", bound=Score)
