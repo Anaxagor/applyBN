@@ -201,7 +201,7 @@ test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False,
 test_loader = DataLoader(test_dataset, batch_size=100, shuffle=False)
 
 # Load pre-trained ResNet-18
-model = models.resnet18(pretrained=True)
+model = models.shufflenet_v2_x0_5(pretrained=True)
 
 # Modify the final layer to match the number of classes in CIFAR-10 (10 classes)
 model.fc = nn.Linear(model.fc.in_features, 10)
@@ -259,10 +259,11 @@ print(f'Accuracy before pruning: {test_accuracy(model, test_loader):.2f}%')
 pruning_method = CausalPruningMethod(model, train_loader, test_loader)
 pruning_method.run_scm()  # Run the SCM to determine filter importance
 
+
 # Prune the model using the custom method
 for name, module in model.named_modules():
     if isinstance(module, nn.Conv2d):
-        foobar_unstructured(module, name="weight")
+        pruning_method.apply(module, name="weight")
 
 print('Finished Pruning')
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 import matplotlib.pyplot as plt
 from applybn.explainable.scm_nn_importance import FilterImportanceSCM
 
@@ -35,10 +35,10 @@ transform = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 )
 trainset = datasets.CIFAR10(
-    root="../../data", train=True, download=True, transform=transform
+    root="data", train=True, download=True, transform=transform
 )
 testset = datasets.CIFAR10(
-    root="../../data", train=False, download=True, transform=transform
+    root="data", train=False, download=True, transform=transform
 )
 trainloader = DataLoader(trainset, batch_size=100, shuffle=True, num_workers=2)
 testloader = DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
@@ -92,13 +92,13 @@ accuracy_before = scm_tool.measure_accuracy()
 print(f"Accuracy before pruning: {accuracy_before}")
 
 # Iteratively prune 1% of the least important filters and measure accuracy
-pruning_iterations = 20
+pruning_iterations = 1
 accuracies_importance = [accuracy_before]
 accuracies_random = [accuracy_before]
 percent_pruned = [0]
 
 # Clone the model for random pruning
-model_random = SmallCNN().to(scm_tool.device)
+model_random = models.shufflenet_v2_x0_5(pretrained=True).to(scm_tool.device)
 model_random.load_state_dict(model.state_dict())
 
 scm_tool_random = FilterImportanceSCM(model_random, trainloader, testloader)
@@ -106,12 +106,12 @@ scm_tool_random.run_scm()
 
 for i in range(pruning_iterations):
     # Importance-based pruning
-    scm_tool.zero_least_important_filters(model.conv2, percentage=i)
+    scm_tool.zero_least_important_filters(model.conv2, percentage=20)
     accuracy_importance = scm_tool.measure_accuracy()
     accuracies_importance.append(accuracy_importance)
 
     # Random pruning
-    scm_tool_random.zero_random_filters(model_random.conv2, percentage=i)
+    scm_tool_random.zero_random_filters(model_random.conv2, percentage=20)
     accuracy_random = scm_tool_random.measure_accuracy()
     accuracies_random.append(accuracy_random)
 
