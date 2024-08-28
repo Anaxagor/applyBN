@@ -19,7 +19,7 @@ class TabularDetector:
 
     def fit(self, discretized_data, y,
             clean_data: pd.DataFrame, descriptor,
-            inject=False):
+            inject=False, bn_params=None):
         """
         # todo: doctest format
         Args:
@@ -28,14 +28,18 @@ class TabularDetector:
             clean_data:
             descriptor:
             inject:
+            bn_params:
         Returns:
 
         """
+        if bn_params is None:
+            bn_params = {}
         if inject and y is None:
             # todo
             raise Exception("no y")
 
-        self.estimator.fit(discretized_data, clean_data=clean_data, descriptor=descriptor, partial=True)
+        self.estimator.fit(discretized_data, clean_data=clean_data,
+                           descriptor=descriptor, partial=True, **bn_params)
         data_to_parameters_learning = clean_data.copy()
         if inject:
             self.estimator.inject_target(y=y, data=discretized_data)

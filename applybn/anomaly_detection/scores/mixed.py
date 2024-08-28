@@ -4,7 +4,7 @@ from applybn.anomaly_detection.scores.score import Score
 # from applybn.anomaly_detection.scores.proximity_based import LocalOutlierScore
 
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -63,9 +63,12 @@ class ODBPScore(Score):
                 # MAE
                 diff.append(abs(cond_mean - row[node_name]))
 
-        scaler = StandardScaler()
-        diff_scaled = scaler.fit_transform(np.asarray(diff).reshape(-1, 1))
-        return diff_scaled
+        # scaler = StandardScaler()
+        # scaler = MinMaxScaler()
+        # diff_scaled = scaler.fit_transform(np.asarray(diff).reshape(-1, 1))
+
+        # return diff_scaled
+        return np.asarray(diff).reshape(-1, 1)
 
     def local_proximity_score(self, X):
         t = np.random.randint(X.shape[1] // 2, X.shape[1] - 1)
@@ -76,10 +79,12 @@ class ODBPScore(Score):
         subset_cont = subset.select_dtypes(include=["number"])
         outlier_factors = self.score_proximity.score(subset_cont)
 
-        scaler = StandardScaler()
-        outlier_factors_scaled = scaler.fit_transform(outlier_factors.reshape(-1, 1))
+        # scaler = StandardScaler()
+        # scaler = MinMaxScaler(feature_range=(0, 10))
+        # outlier_factors_scaled = scaler.fit_transform(outlier_factors.reshape(-1, 1))
 
-        return outlier_factors_scaled
+        return np.asarray(outlier_factors).reshape(-1, 1)
+        # return outlier_factors_scaled
 
     def score(self, X):
         child_nodes = []
@@ -99,20 +104,23 @@ class ODBPScore(Score):
         proximity_factors = np.hstack(proximity_factors)
         model_factors = np.hstack(model_factors)
 
-        # np.where(model_score > 0, model_score, 0) + np.where(proximity_score > 0, proximity_score, 0)
-        proximity_factors = np.where(proximity_factors >= 0, proximity_factors, 0)
+        proximity_factors = np.where(proximity_factors <= 0, proximity_factors, 0)
         model_factors = np.where(model_factors >= 0, model_factors, 0)
 
-        proximity_outliers_factors = proximity_factors.sum(axis=1)
+        proximity_outliers_factors = np.negative(proximity_factors).sum(axis=1)
         model_outliers_factors = model_factors.sum(axis=1)
 
-        outlier_factors = proximity_outliers_factors + model_outliers_factors
+        # outlier_factors = proximity_outliers_factors + model_outliers_factors
 
-        model_impact = proximity_outliers_factors / outlier_factors
-        proximity_impact = model_outliers_factors / outlier_factors
+        outlier_factors = np.vstack([proximity_outliers_factors, model_outliers_factors])
+        from_proximity = np.where(outlier_factors[:, 0] > outlier_factors[:, 1], 1, 0)
 
-        self.model_impact = model_impact.mean()
-        self.proximity_impact = proximity_impact.mean()
+        test = np.max(np.vstack([proximity_outliers_factors, model_outliers_factors]), axis=0)
+        # model_impact = model_outliers_factors / outlier_factors
+        # proximity_impact = proximity_outliers_factors / outlier_factors
+        #
+        # self.model_impact = np.nanmean(model_impact)
+        # self.proximity_impact = np.nanmean(proximity_impact)
         # fig, ax = plt.subplots()
         #
         # # Stacked bar chart
@@ -121,7 +129,8 @@ class ODBPScore(Score):
         #        label="prox_impact")
         # ax.legend()
         # ax.set_title(
-        #     f"Mean impact model: {np.mean(model_impact).round(3)}; Mean impact proximity: {np.mean(proximity_impact).round(3)}")
+        #     f"Mean impact model: {self.model_impact.round(3)}; Mean impact proximity: {self.proximity_impact.round(3)}")
         # plt.show()
-        return outlier_factors
 
+        # return outlier_factors
+        return test, from_proximity
