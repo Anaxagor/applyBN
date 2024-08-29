@@ -1,40 +1,43 @@
 from applybn.anomaly_detection.static_anomaly_detector.tabular_detector import TabularDetector
 from applybn.core.estimators import BNEstimator
-from applybn.anomaly_detection.scores.model_based import ModelBasedScore
 from applybn.anomaly_detection.scores.proximity_based import LocalOutlierScore
 from applybn.anomaly_detection.scores.mixed import ODBPScore
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bamt.preprocessors import Preprocessor
 from sklearn import preprocessing as pp
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
 import seaborn as sns
-from scipy.io import loadmat
-from ucimlrepo import fetch_ucirepo
+from sklearn.metrics import f1_score, precision_score, recall_score
+from scipy.io import arff
+import scipy
+import pandas as pd
 
-mat = loadmat('../../data/cardio.mat')
+# data = arff.loadarff('../../data/tabular_datasets/seismic-bumps.arff')
+# df = pd.DataFrame(data[0])
+# print(df.columns)
+# bytes_coded = ['seismic', 'seismoacoustic', 'shift', 'ghazard', 'class']
+# for col in bytes_coded:
+#     df[col] = df[col].str.decode("utf-8")
 
-df = pd.DataFrame(mat["X"])
-y = pd.DataFrame(mat["y"])
+mat = scipy.io.loadmat('../../data/tabular_datasets/wbc.mat')
+df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
 
-# df = pd.read_csv("../../data/Sonar.csv")
-# y = df.pop("Class")
+# df["anomaly"] = y
+# sns.pairplot(data=df, hue='anomaly', corner=True)
+# plt.tight_layout()
+# plt.savefig("tmp.png")
+# df = pd.read_csv("../../data/tabular_datasets/vehicle_claims_labeled.csv").drop(
+#     ['category_anomaly', 'issue_id','breakdown_date', 'repair_date', " Genmodel_ID"], axis=1)
 
-
-
-# fetch dataset
-# waveform_database_generator_version_1 = fetch_ucirepo(id=107)
-
-# data (as pandas dataframes)
-# df = waveform_database_generator_version_1.data.features
-# y = waveform_database_generator_version_1.data.targets
-
-X_train, _, y_train, _ = train_test_split(
-    df, y, test_size=0.3, random_state=42, stratify=y)
-
+# X_train = df.drop(["class"], axis=1)
+# y_train = df["class"]
+# X_train, _, y_train, _ = train_test_split(
+#     df.drop(["class"], axis=1), df["class"], test_size=0.7, random_state=42, stratify=df["class"])
+# print(X_train.shape)
+# print(np.unique(y_train))
 estimator = BNEstimator(has_logit=True,
                         bn_type="cont")
 
@@ -42,11 +45,10 @@ encoder = pp.LabelEncoder()
 discretizer = pp.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='uniform')
 
 # create a preprocessor object with encoder and discretizer
-p = Preprocessor([('discretizer', discretizer)])
-# p = Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
+p = Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
+# p = Preprocessor([('discretizer', discretizer)])
 # discretize data for structure learning
-
-discretized_data, encoding = p.apply(X_train)
+discretized_data, encoding = p.apply(df)
 
 # for k, v in encoding.items():
 #     discretized_data[k] += 1
@@ -59,13 +61,13 @@ discretized_data, encoding = p.apply(X_train)
 #                    index=y_train.index)
 # print(dict(zip(y_coder.classes_, range(len(y_coder.classes_)))))
 
-# get information about data
+# # get information about data
 info = p.info
 
-# ------------------
+# # ------------------
 
 # score = ModelBasedScore(estimator)
-score_proximity = LocalOutlierScore(n_neighbors=20)
+score_proximity = LocalOutlierScore()
 score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=100)
 
 detector = TabularDetector(estimator,
@@ -73,45 +75,27 @@ detector = TabularDetector(estimator,
                            target_name=None)
 
 detector.fit(discretized_data, y=None,
-             clean_data=X_train, descriptor=info,
-             inject=False)
+             clean_data=df, descriptor=info,
+             inject=False, bn_params={"scoring_function": ("MI",)})
 detector.estimator.bn.get_info(as_df=False)
 
-outlier_scores = detector.detect(X_train, return_scores=True)
+outlier_scores = detector.detect(df, return_scores=True)
 
-final = pd.DataFrame(np.hstack([outlier_scores.values.reshape(-1, 1), y_train.values.reshape(-1, 1)]),
-                     columns=["scores", "anomaly"])
+final = pd.DataFrame(np.hstack([outlier_scores.values.reshape(-1, 1), y.values.reshape(-1, 1).astype(int)]),
+                     columns=["score", "anomaly"])
 
-sns.scatterplot(data=final, x=range(final.shape[0]), y="scores", hue="anomaly").set_title(f"Scores kdeplot")
-plt.show()
-# import matplotlib.patches as mpatches
-# mim_value = detector.score.model_impact.round(3)
-# mip_value = detector.score.proximity_impact.round(3)
-# f1_value = f1_score(disc_y, outlier_scores).round(3)
-#
-# mim = mpatches.Patch(color='red', label=f"Impact model: {mim_value}")
-# mip = mpatches.Patch(color='black', label=f"Impact proximity: {mip_value}")
-# f1 = mpatches.Patch(color="blue", label=f"F1_Score: {f1_value}")
-#
-# leg = ax.legend(handles=[mim, mip, f1])
-# leg.get_frame().set_edgecolor('b')
-# leg.get_frame().set_linewidth(0.0)
-# sns.move_legend(ax, "center", bbox_to_anchor=(2, 1))
-# plt.tight_layout()
-# plt.savefig(f"tmp.png")
-# scores = []
-#
-# for i in np.linspace(0, 1, 10):
-#     preds_trunc = np.where(preds > i, 0, 1)
-#     scores.append(f1_score(y_coder.transform(y_test), preds_trunc))
+thresholds = np.linspace(1, outlier_scores.max(), 100)
+eval_scores = []
 
-# plt.plot(np.linspace(0, 1, 10), scores)
-# plt.xlabel("threshold")
-# plt.ylabel("f1_score")
-# plt.title("Threshold analysis on bank data (hybrid BN)")
+for t in thresholds:
+    outlier_scores_thresholded = np.where(outlier_scores < t, 0, 1)
+    eval_scores.append(recall_score(y.values, outlier_scores_thresholded))
+
+# plt.figure()
+# sns.scatterplot(data=final, x=range(final.shape[0]), y="score", hue="anomaly")
 # plt.show()
-# plt.savefig("B001_bank_data_inject.png")
-# detector.estimator.bn.plot("tmp.html")
-# print(
-#     detector.bn.find_family("y", height=3, depth=3, plot_to="tt5.html")
-# )
+
+plt.figure()
+ax = sns.lineplot(x=thresholds, y=eval_scores)
+ax.set(xlabel='thresholds', ylabel='recall', title="sensitivity analysis")
+plt.show()
