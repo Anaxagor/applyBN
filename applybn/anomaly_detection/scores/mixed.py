@@ -20,6 +20,43 @@ class ODBPScore(Score):
         self.proximity_impact = 0
         self.model_impact = 0
 
+    def local_model_score_linear(self, X: pd.DataFrame, node_name):
+        node = self.estimator.bn[node_name]
+        parents = node.cont_parents + node.disc_parents
+        subspace = X[[node_name] + parents]
+        means = []
+        dist = self.estimator.bn.distributions[node_name]
+
+        # if node.disc_parents:
+        #     grouped = subspace.groupby(node.disc_parents)
+        # else:
+        #     grouped = subspace
+
+        for indx, row in subspace.iterrows():
+            coefs = dist["regressor_obj"].coef_
+            mean_estimated = dist["regressor_obj"].intercept_ + coefs.reshape(1, -1) @ row[1:].to_numpy().reshape(-1, 1)
+            true_value = row[node_name]
+            means.append((true_value - mean_estimated[0][0]) / dist["variance"])
+
+        # scaler = StandardScaler()
+        # mean_scaled = scaler.fit_transform(np.asarray(means).reshape(-1, 1))
+        return np.asarray(means).reshape(-1, 1)
+        # return mean_scaled
+
+        # for parents_combination, group in grouped:
+        #     diff_local = []
+        #     mean_node = dist[parents_combination].regressor_obj.coef_
+        #     subspace = [mean_node]
+        #     subspace.extend(
+        #         [self.estimator.bn.get_dist(parent_name) for parent_name in group.columns]
+        #     )
+        #     subspace = np.array(subspace)
+        #     # todo: matrix form needed
+        #     for indx, row in group.iterrows():
+        #         diff_local.append(mean_node + subspace @ row.to_numpy())
+        #
+        #     diff.append(diff_local)
+
     def local_model_score(self, X: pd.DataFrame, node_name):
         node = self.estimator.bn[node_name]
         diff = []
@@ -79,6 +116,7 @@ class ODBPScore(Score):
         scaler = StandardScaler()
         outlier_factors_scaled = scaler.fit_transform(outlier_factors.reshape(-1, 1))
 
+        # return np.asarray(outlier_factors).reshape(-1, 1)
         return outlier_factors_scaled
 
     def score(self, X):
@@ -94,12 +132,11 @@ class ODBPScore(Score):
             proximity_factors.append(self.local_proximity_score(X))
 
         for child_node in child_nodes:
-            model_factors.append(self.local_model_score(X, child_node))
+            model_factors.append(self.local_model_score_linear(X, child_node))
 
         proximity_factors = np.hstack(proximity_factors)
         model_factors = np.hstack(model_factors)
 
-        # np.where(model_score > 0, model_score, 0) + np.where(proximity_score > 0, proximity_score, 0)
         proximity_factors = np.where(proximity_factors >= 0, proximity_factors, 0)
         model_factors = np.where(model_factors >= 0, model_factors, 0)
 
@@ -108,11 +145,11 @@ class ODBPScore(Score):
 
         outlier_factors = proximity_outliers_factors + model_outliers_factors
 
-        model_impact = proximity_outliers_factors / outlier_factors
-        proximity_impact = model_outliers_factors / outlier_factors
-
-        self.model_impact = model_impact.mean()
-        self.proximity_impact = proximity_impact.mean()
+        # model_impact =  model_outliers_factors / outlier_factors
+        # proximity_impact = proximity_outliers_factors / outlier_factors
+        #
+        # self.model_impact = model_impact.mean()
+        # self.proximity_impact = proximity_impact.mean()
         # fig, ax = plt.subplots()
         #
         # # Stacked bar chart

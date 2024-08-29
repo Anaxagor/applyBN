@@ -12,41 +12,52 @@ from sklearn import preprocessing as pp
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 import seaborn as sns
+from scipy.io import loadmat
+from ucimlrepo import fetch_ucirepo
 
-df = pd.read_csv("../../data/benchmarks/bank_data/bank_data.csv", index_col=0) \
-    .sample(3000, random_state=42, ignore_index=True)
+mat = loadmat('../../data/cardio.mat')
 
-disc_cols = df.select_dtypes(include=["object"]).columns
-cont_cols = df.select_dtypes(include=["int64"]).columns
-df[cont_cols] = df[cont_cols].astype(float)
+df = pd.DataFrame(mat["X"])
+y = pd.DataFrame(mat["y"])
 
-# print(df.shape)
+# df = pd.read_csv("../../data/Sonar.csv")
+# y = df.pop("Class")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    df.drop(["y"], axis=1), df["y"], test_size=0.5, random_state=42, stratify=df["y"])
+
+
+# fetch dataset
+# waveform_database_generator_version_1 = fetch_ucirepo(id=107)
+
+# data (as pandas dataframes)
+# df = waveform_database_generator_version_1.data.features
+# y = waveform_database_generator_version_1.data.targets
+
+X_train, _, y_train, _ = train_test_split(
+    df, y, test_size=0.3, random_state=42, stratify=y)
 
 estimator = BNEstimator(has_logit=True,
-                        bn_type="hybrid")
+                        bn_type="cont")
 
 encoder = pp.LabelEncoder()
 discretizer = pp.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='uniform')
 
 # create a preprocessor object with encoder and discretizer
-p = Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
+p = Preprocessor([('discretizer', discretizer)])
+# p = Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
 # discretize data for structure learning
 
 discretized_data, encoding = p.apply(X_train)
 
-for k, v in encoding.items():
-    discretized_data[k] += 1
-    for k1 in v.keys():
-        encoding[k][k1] += 1
+# for k, v in encoding.items():
+#     discretized_data[k] += 1
+#     for k1 in v.keys():
+#         encoding[k][k1] += 1
 
-y_coder = pp.LabelEncoder()
-disc_y = pd.Series(y_coder.fit_transform(y_train),
-                   name=y_train.name,
-                   index=y_train.index)
-print(dict(zip(y_coder.classes_, range(len(y_coder.classes_)))))
+# y_coder = pp.LabelEncoder()
+# disc_y = pd.Series(y_coder.fit_transform(y_train),
+#                    name=y_train.name,
+#                    index=y_train.index)
+# print(dict(zip(y_coder.classes_, range(len(y_coder.classes_)))))
 
 # get information about data
 info = p.info
@@ -54,8 +65,8 @@ info = p.info
 # ------------------
 
 # score = ModelBasedScore(estimator)
-score_proximity = LocalOutlierScore(n_neighbors=45)
-score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=20)
+score_proximity = LocalOutlierScore(n_neighbors=20)
+score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=100)
 
 detector = TabularDetector(estimator,
                            score=score,
@@ -66,40 +77,28 @@ detector.fit(discretized_data, y=None,
              inject=False)
 detector.estimator.bn.get_info(as_df=False)
 
-# discretized_test, _ = p.apply(X_test)
 outlier_scores = detector.detect(X_train, return_scores=True)
-threshold = 10
-outlier_scores[outlier_scores >= threshold] = 1
-outlier_scores[outlier_scores < threshold] = 0
-# plt.figure(figsize=(20, 5))
-# plt.plot(outlier_scores.sort_index(), label="Outlier_score")
+
+final = pd.DataFrame(np.hstack([outlier_scores.values.reshape(-1, 1), y_train.values.reshape(-1, 1)]),
+                     columns=["scores", "anomaly"])
+
+sns.scatterplot(data=final, x=range(final.shape[0]), y="scores", hue="anomaly").set_title(f"Scores kdeplot")
+plt.show()
+# import matplotlib.patches as mpatches
+# mim_value = detector.score.model_impact.round(3)
+# mip_value = detector.score.proximity_impact.round(3)
+# f1_value = f1_score(disc_y, outlier_scores).round(3)
 #
-# plt.scatter(x=disc_y[disc_y == 1].index,
-#             y=outlier_scores[disc_y == 1],
-#             label="anomalies", color="r", s=4)
+# mim = mpatches.Patch(color='red', label=f"Impact model: {mim_value}")
+# mip = mpatches.Patch(color='black', label=f"Impact proximity: {mip_value}")
+# f1 = mpatches.Patch(color="blue", label=f"F1_Score: {f1_value}")
 #
-# plt.title("Preds")
-# plt.legend()
-# plt.show()
-f, ax = plt.subplots(1, 1)
-
-sns.kdeplot(detector.scores, ax=ax).set_title(f"Scores kdeplot")
-
-import matplotlib.patches as mpatches
-mim_value = detector.score.model_impact.round(3)
-mip_value = detector.score.proximity_impact.round(3)
-f1_value = f1_score(disc_y, outlier_scores).round(3)
-
-mim = mpatches.Patch(color='red', label=f"Impact model: {mim_value}")
-mip = mpatches.Patch(color='black', label=f"Impact proximity: {mip_value}")
-f1 = mpatches.Patch(color="blue", label=f"F1_Score: {f1_value}")
-
-leg = ax.legend(handles=[mim, mip, f1])
+# leg = ax.legend(handles=[mim, mip, f1])
 # leg.get_frame().set_edgecolor('b')
 # leg.get_frame().set_linewidth(0.0)
 # sns.move_legend(ax, "center", bbox_to_anchor=(2, 1))
 # plt.tight_layout()
-plt.savefig(f"tmp.png")
+# plt.savefig(f"tmp.png")
 # scores = []
 #
 # for i in np.linspace(0, 1, 10):
