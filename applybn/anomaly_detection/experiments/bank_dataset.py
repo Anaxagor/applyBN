@@ -1,11 +1,13 @@
+from sklearn.preprocessing import StandardScaler
+
 from applybn.anomaly_detection.static_anomaly_detector.tabular_detector import TabularDetector
 from applybn.core.estimators import BNEstimator
 from applybn.anomaly_detection.scores.proximity_based import LocalOutlierScore
 from applybn.anomaly_detection.scores.mixed import ODBPScore
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
+import numpy as np
 from bamt.preprocessors import Preprocessor
 from sklearn import preprocessing as pp
 from sklearn.model_selection import train_test_split
@@ -18,12 +20,18 @@ disc_cols = df.select_dtypes(include=["object"]).columns
 cont_cols = df.select_dtypes(include=["int64"]).columns
 df[cont_cols] = df[cont_cols].astype(float)
 
+for col in cont_cols:
+    scaler = StandardScaler()
+    df[col] = scaler.fit_transform(df[col].values.reshape(-1, 1))
+
+print(df.describe().loc[['min', 'max']])
+
 # print(df.shape)
 
 X_train, X_test, y_train, y_test = train_test_split(
     df.drop(["y"], axis=1), df["y"], test_size=0.5, random_state=42, stratify=df["y"])
 
-estimator = BNEstimator(has_logit=True,
+estimator = BNEstimator(has_logit=False,
                         bn_type="hybrid")
 
 encoder = pp.LabelEncoder()
@@ -52,8 +60,8 @@ info = p.info
 # ------------------
 
 # score = ModelBasedScore(estimator)
-score_proximity = LocalOutlierScore(n_neighbors=45)
-score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=20)
+score_proximity = LocalOutlierScore(n_neighbors=30)
+score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=5)
 
 detector = TabularDetector(estimator,
                            score=score,
@@ -70,5 +78,11 @@ outlier_scores = detector.detect(X_train, return_scores=True)
 final = pd.DataFrame(np.hstack([outlier_scores.values.reshape(-1, 1), disc_y.values.reshape(-1, 1).astype(int)]),
                      columns=["score", "anomaly"])
 
-sns.scatterplot(data=final, x=range(final.shape[0]), y="score", hue="anomaly").set_title(f"Scores kdeplot")
+
+desc = f"""[Nonlinear, no scaler, model metric:Z-score, summation]"""
+sns.scatterplot(data=final, x=range(final.shape[0]),
+                y="score", hue="anomaly") \
+    .set_title("Scores; Impacts(P, M): "
+                  f"[{detector.score.proximity_impact.round(3)}, {detector.score.model_impact.round(3)}]")
 plt.show()
+# plt.savefig(f"real_results/{desc}.png")
