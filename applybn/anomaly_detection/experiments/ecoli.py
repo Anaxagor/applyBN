@@ -12,19 +12,17 @@ from sklearn import preprocessing as pp
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 
 from sklearn.metrics import f1_score
-from scipy.io import arff
-import scipy
 import pandas as pd
 
 # np.random.seed(20)
 # Ecoli dataset
-# from ucimlrepo import fetch_ucirepo
-# ecoli = fetch_ucirepo(id=39)
-# df = ecoli.data.features
-# y = ecoli.data.targets
-# # Among the 8 classes omL, imL, and imS are the minority classes and used as outliers
-# y = pd.DataFrame(np.where(np.isin(y, ["omL", "imL", "imS"]), 1, 0))
-# print(df.shape)
+from ucimlrepo import fetch_ucirepo
+ecoli = fetch_ucirepo(id=39)
+df = ecoli.data.features
+y = ecoli.data.targets
+# Among the 8 classes omL, imL, and imS are the minority classes and used as outliers
+y = pd.DataFrame(np.where(np.isin(y, ["omL", "imL", "imS"]), 1, 0))
+print(df.shape)
 
 # vehicle datset
 # df = pd.read_csv("../../data/tabular_datasets/vehicle_claims_labeled.csv").drop(
@@ -45,11 +43,8 @@ import pandas as pd
 # for col in bytes_coded:
 #     df[col] = df[col].str.decode("utf-8")
 
-mat = scipy.io.loadmat('../../../data/tabular_datasets/cardio.mat')
-df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
-print(df.shape)
 cv = 20
-skf = StratifiedShuffleSplit(n_splits=cv)
+skf = StratifiedKFold(n_splits=cv)
 
 i = -1
 cross_val_scores = {"scores": []}
@@ -151,5 +146,5 @@ for train_indexes, test_indexes in skf.split(df, y):
 
 # plt.savefig(f"real_results/cardio/{desc}.png")
 
-with open(f"cardio_cv/2cross_val_with_sss_cv{cv}_mixture.json", "w+") as f:
+with open(f"ecoli_cv/2cross_val_with_skf_cv{cv}_mixture.json", "w+") as f:
     json.dump(cross_val_scores, f)

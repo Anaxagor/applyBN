@@ -79,7 +79,13 @@ class ODBPScore(Score):
 
             # todo: super disgusting
             if isinstance(cond_dist, tuple):
-                cond_mean, var = cond_dist
+                if len(cond_dist) == 2:
+                    cond_mean, var = cond_dist
+                else:
+                    cond_mean = node.predict(dist, pvals=pvals_bamt_style)
+                    # todo: may be use singular vals of cov matrix as norm constants?
+                    diff.append(row[node_name] - cond_mean)
+                    continue
             else:
                 dispvals = []
                 for pval in pvals_bamt_style:
@@ -93,6 +99,10 @@ class ODBPScore(Score):
                 elif "hybcprob" in dist.keys():
                     if "classes" in dist["hybcprob"][str(dispvals)]:
                         classes = dist["hybcprob"][str(dispvals)]["classes"]
+                        if pd.isna(classes[0]):
+                            # if subspace of a combination is empty
+                            diff.append(np.nan)
+                            continue
                     else:
                         raise Exception()
                 else:
