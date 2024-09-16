@@ -45,10 +45,11 @@ class BNEstimator(BaseEstimator):
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X,
             # inverse_transformer: callable,
-            clean_data,
             descriptor: dict,
+            clean_data=None,
             y=None,
             partial: bool = False,
+            only_params: bool = False,
             **kwargs: Unpack[ParamDict]):
         """
         # todo: remove passing 2 dataframes, instead use partial arg
@@ -65,11 +66,16 @@ class BNEstimator(BaseEstimator):
             self : object
                 Returns self.
         """
+        if only_params:
+            # todo: exception if not structure
+            self.bn.fit_parameters(X)
+            return self
 
         self.bn.add_nodes(descriptor)
         self.bn.add_edges(X, **kwargs)
 
         if not partial:
+            # todo: exception if no clean data
             self.bn.fit_parameters(clean_data)
 
         return self

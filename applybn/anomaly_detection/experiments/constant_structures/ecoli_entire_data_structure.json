@@ -1,0 +1,62 @@
+{
+  "info": {
+    "types": {
+      "mcg": "cont",
+      "gvh": "cont",
+      "lip": "cont",
+      "chg": "cont",
+      "aac": "cont",
+      "alm1": "cont",
+      "alm2": "cont"
+    },
+    "signs": {
+      "mcg": "pos",
+      "gvh": "pos",
+      "lip": "pos",
+      "chg": "pos",
+      "aac": "pos",
+      "alm1": "pos",
+      "alm2": "pos"
+    }
+  },
+  "edges": [
+    [
+      "mcg",
+      "gvh"
+    ],
+    [
+      "aac",
+      "mcg"
+    ],
+    [
+      "aac",
+      "gvh"
+    ],
+    [
+      "aac",
+      "alm2"
+    ],
+    [
+      "alm1",
+      "mcg"
+    ],
+    [
+      "alm1",
+      "gvh"
+    ],
+    [
+      "alm2",
+      "alm1"
+    ],
+    [
+      "alm2",
+      "mcg"
+    ],
+    [
+      "alm2",
+      "gvh"
+    ]
+  ],
+  "parameters": {},
+  "weights": {}
+}

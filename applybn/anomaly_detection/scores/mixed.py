@@ -12,9 +12,10 @@ from sklearn.decomposition import PCA
 
 
 class ODBPScore(Score):
-    def __init__(self, BNEstimator, score, encoding, proximity_steps=10):
+    def __init__(self, score, encoding, proximity_steps=10):
         super().__init__()
-        self.estimator = BNEstimator
+        # self.estimator = BNEstimator
+        self.bn = None
         self.score_proximity = score
         self.encoding = encoding
         self.proximity_steps = proximity_steps
@@ -22,13 +23,12 @@ class ODBPScore(Score):
         self.proximity_impact = 0
         self.model_impact = 0
 
-
     def local_model_score_linear(self, X: pd.DataFrame, node_name):
-        node = self.estimator.bn[node_name]
+        node = self.bn[node_name]
         parents = node.cont_parents + node.disc_parents
         subspace = X[[node_name] + parents]
         means = []
-        dist = self.estimator.bn.distributions[node_name]
+        dist = self.bn.distributions[node_name]
 
         # if node.disc_parents:
         #     grouped = subspace.groupby(node.disc_parents)
@@ -65,9 +65,9 @@ class ODBPScore(Score):
         #     diff.append(diff_local)
 
     def local_model_score(self, X: pd.DataFrame, node_name):
-        node = self.estimator.bn[node_name]
+        node = self.bn[node_name]
         diff = []
-        dist = self.estimator.bn.distributions[node_name]
+        dist = self.bn.distributions[node_name]
         parents = node.cont_parents + node.disc_parents
 
         for _, row in X.iterrows():
@@ -75,7 +75,7 @@ class ODBPScore(Score):
             pvalues = row[parents].to_dict()
 
             pvals_bamt_style = [pvalues[parent] for parent in parents]
-            cond_dist = self.estimator.bn.get_dist(node_name, pvals=pvalues)
+            cond_dist = self.bn.get_dist(node_name, pvals=pvalues)
 
             # todo: super disgusting
             if isinstance(cond_dist, tuple):
@@ -188,7 +188,7 @@ class ODBPScore(Score):
     def score(self, X):
         child_nodes = []
         for column in X.columns:
-            if self.estimator.bn[column].disc_parents + self.estimator.bn[column].cont_parents:
+            if self.bn[column].disc_parents + self.bn[column].cont_parents:
                 child_nodes.append(column)
 
         proximity_factors = []
@@ -209,7 +209,7 @@ class ODBPScore(Score):
         # higher the more normal, only
         proximity_outliers_factors = proximity_factors.sum(axis=1)
 
-        # any sign can be here, so we take absolute values since distortion from mean is treated as anomaly
+        # any sign can be here, so we take absolute values since distortion from mean is treated as an anomaly
         model_outliers_factors = np.abs(model_factors).sum(axis=1)
 
         outlier_factors = proximity_outliers_factors + model_outliers_factors

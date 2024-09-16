@@ -5,6 +5,7 @@ from applybn.core.estimators import BNEstimator
 # todo: aliases??
 # from typing import Type
 from applybn.core.schema import scores
+import inspect
 
 
 class TabularDetector:
@@ -14,12 +15,19 @@ class TabularDetector:
                  target_name: str | None = "anomaly"):
         self.estimator = estimator
         self.score = score
-        self.scores = None
+        self.scores_ = None
         self.target_name = target_name
 
-    def fit(self, discretized_data, y,
-            clean_data: pd.DataFrame, descriptor,
-            inject=False, bn_params=None):
+    def fit(self, X, y=None, **kwargs):
+        self.estimator.bn.load(kwargs["structure"])
+        self.estimator.bn.fit_parameters(X)
+
+        self.score.bn = self.estimator.bn
+        return self
+
+    def fit_disabled(self, discretized_data, y,
+                     clean_data: pd.DataFrame, descriptor,
+                     inject=False, bn_params=None):
         """
         # todo: doctest format
         Args:
@@ -71,10 +79,10 @@ class TabularDetector:
         self.estimator.bn.fit_parameters(data_to_parameters_learning[substructure["nodes"]])
         return self
 
-    def detect(self,
+    def predict(self,
                X,
                threshold=0.7,
-               return_scores=False,
+               return_scores=True,
                inverse_threshold=False):
         # todo: fit validation
 
@@ -102,3 +110,58 @@ class TabularDetector:
         #     classes[scores_values < threshold] = 1
 
         # return classes
+
+    def get_params(self, deep=True):
+        """
+        Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """
+        out = dict()
+        for key in self._get_param_names():
+            value = getattr(self, key)
+            if deep and hasattr(value, "get_params") and not isinstance(value, type):
+                deep_items = value.get_params().items()
+                out.update((key + "__" + k, val) for k, val in deep_items)
+            out[key] = value
+        return out
+
+    @classmethod
+    def _get_param_names(cls):
+        """Get parameter names for the estimator"""
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
+
+        # introspect the constructor arguments to find the model parameters
+        # to represent
+        init_signature = inspect.signature(init)
+        # Consider the constructor parameters excluding 'self'
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
+                raise RuntimeError(
+                    "scikit-learn estimators should always "
+                    "specify their parameters in the signature"
+                    " of their __init__ (no varargs)."
+                    " %s with constructor %s doesn't "
+                    " follow this convention." % (cls, init_signature)
+                )
+        # Extract and sort argument names excluding 'self'
+        return sorted([p.name for p in parameters])
