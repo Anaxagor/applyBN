@@ -9,7 +9,7 @@ from feature_selector import FeatureSelector
 
 class CausalFeatureSelector(FeatureSelector):
     """
-    Класс для отбора признаков на основе причинного эффекта
+    Класс для отбора признаков на основе causal effect
     """
 
     def __init__(self, **parameters):
