@@ -15,6 +15,7 @@ class ODBPScore(Score):
     def __init__(self, score, encoding, proximity_steps=10):
         super().__init__()
         # self.estimator = BNEstimator
+        # todo: remove bn from here
         self.bn = None
         self.score_proximity = score
         self.encoding = encoding

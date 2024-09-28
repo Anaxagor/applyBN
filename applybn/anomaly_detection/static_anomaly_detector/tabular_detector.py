@@ -18,16 +18,21 @@ class TabularDetector:
         self.scores_ = None
         self.target_name = target_name
 
-    def fit(self, X, y=None, **kwargs):
-        self.estimator.bn.load(kwargs["structure"])
-        self.estimator.bn.fit_parameters(X)
+    def partial_fit(self, X, mode: str, y=None, **kwargs):
+        match mode:
+            case "structure":
+                self.estimator.fit(X, partial=True, **kwargs)
+            case "parameters":
+                self.estimator.bn.fit_parameters(X, **kwargs)
+                self.score.bn = self.estimator.bn
+            case "both":
+                self.estimator.fit(X, **kwargs)
+            case _:
+                raise Exception("Unknown mode!")
 
-        self.score.bn = self.estimator.bn
-        return self
-
-    def fit_disabled(self, discretized_data, y,
-                     clean_data: pd.DataFrame, descriptor,
-                     inject=False, bn_params=None):
+    def fit(self, discretized_data, y, descriptor,
+            clean_data: pd.DataFrame | None = None,
+            inject=False, bn_params=None):
         """
         # todo: doctest format
         Args:
@@ -80,10 +85,10 @@ class TabularDetector:
         return self
 
     def predict(self,
-               X,
-               threshold=0.7,
-               return_scores=True,
-               inverse_threshold=False):
+                X,
+                threshold=0.7,
+                return_scores=True,
+                inverse_threshold=False):
         # todo: fit validation
 
         scores_values = self.score.score(X)

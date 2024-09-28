@@ -21,6 +21,7 @@ import seaborn as sns
 from ucimlrepo import fetch_ucirepo
 import scipy
 
+
 def my_score(y, y_pred):
     thresholds = np.linspace(1, y_pred.max(), 100)
     eval_scores = []
@@ -36,17 +37,17 @@ def my_score(y, y_pred):
     return np.max(eval_scores)
 
 
-# ecoli = fetch_ucirepo(id=39)
-# df = ecoli.data.features
-# y = ecoli.data.targets
-# # Among the 8 classes omL, imL, and imS are the minority classes and used as outliers
-# y = pd.DataFrame(np.where(np.isin(y, ["omL", "imL", "imS"]), 1, 0))
-# print(df.shape)
-
-mat = scipy.io.loadmat('../../../../data/tabular_datasets/cardio.mat')
-df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
-df.columns = [f"feature_{i}" for i in range(df.shape[1])]
+ecoli = fetch_ucirepo(id=39)
+df = ecoli.data.features
+y = ecoli.data.targets
+# Among the 8 classes omL, imL, and imS are the minority classes and used as outliers
+y = pd.DataFrame(np.where(np.isin(y, ["omL", "imL", "imS"]), 1, 0))
 print(df.shape)
+
+# mat = scipy.io.loadmat('../../../../data/cardio.mat')
+# df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
+# df.columns = [f"feature_{i}" for i in range(df.shape[1])]
+# print(df.shape)
 # vehicle datset
 # df = pd.read_csv("../../data/tabular_datasets/vehicle_claims_labeled.csv").drop(
 #     ['category_anomaly', 'issue_id','breakdown_date', 'repair_date', " Genmodel_ID"], axis=1)
@@ -97,25 +98,26 @@ score = ODBPScore(score_proximity, encoding=encoding, proximity_steps=PROX_STEPS
 local_detector = TabularDetector(estimator,
                                  score=score,
                                  target_name=None)
-cv = 10
-skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=20)
-# sss = StratifiedShuffleSplit(n_splits=cv, random_state=20)
+cv = 20
+# skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=20)
+sss = StratifiedShuffleSplit(n_splits=cv, random_state=20)
 
 cross_val_scores = cross_val_score(local_detector, df, y, scoring=make_scorer(my_score),
-                         cv=skf, verbose=2,
-                         params={"structure": "cardio_entire_data_structure.json"}, error_score="raise")
+                                   cv=sss, verbose=2,
+                                   params={"structure": "ecoli_entire_data_structure.json"}, error_score="raise")
 print(cross_val_scores)
 print(cross_val_scores.mean().round(5),
       cross_val_scores.std().round(5))
 
-score, permutation_scores, pvalue = permutation_test_score(local_detector, df, y, scoring=make_scorer(my_score),
-                                cv=skf, verbose=2, n_jobs=10, n_permutations=1000,
-                                fit_params={"structure": "cardio_entire_data_structure.json"}, random_state=20)
-print()
-print(f"Original Score: {score:.3f}")
-print(permutation_scores.mean().round(5), permutation_scores.std().round(5))
-print(f"P-value: {pvalue:.3f}")
-
+# score, permutation_scores, pvalue = permutation_test_score(local_detector, df, y, scoring=make_scorer(my_score),
+#                                                            cv=skf, verbose=2, n_jobs=10, n_permutations=1000,
+#                                                            fit_params={
+#                                                                "structure": "cardio_entire_data_structure.json"},
+#                                                            random_state=20)
+# print()
+# print(f"Original Score: {score:.3f}")
+# print(permutation_scores.mean().round(5), permutation_scores.std().round(5))
+# print(f"P-value: {pvalue:.3f}")
 
 # random_state=20
 # 5
@@ -177,10 +179,10 @@ print(f"P-value: {pvalue:.3f}")
 # Mean: 0.83333
 # Std: 0.30732
 # 15
-d = "cardio/skf"
+d = "ecoli/sss"
 
 with open(f"{d}/cross_val_cv{cv}.json", "w+") as f:
     json.dump({"scores": list(cross_val_scores)}, f)
 
-with open(f"{d}/permutatuion_test_cv{cv}.json", "w+") as f:
-    json.dump({"score": score, "perm_scores": list(permutation_scores), "pvalue": pvalue}, f)
+# with open(f"{d}/permutatuion_test_cv{cv}.json", "w+") as f:
+#     json.dump({"score": score, "perm_scores": list(permutation_scores), "pvalue": pvalue}, f)

@@ -37,11 +37,13 @@ import pandas as pd
 # for col in bytes_coded:
 #     df[col] = df[col].str.decode("utf-8")
 
-mat = scipy.io.loadmat('../../../data/tabular_datasets/cardio.mat')
+mat = scipy.io.loadmat('/home/roman/Desktop/BAMT/applyBN/data/wbc.mat')
 df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
 print(df.shape)
+
 cv = 20
-skf = StratifiedShuffleSplit(n_splits=cv)
+skf = StratifiedShuffleSplit(cv, random_state=20)
+# skf = StratifiedKFold(n_splits=cv)
 
 i = -1
 cross_val_scores = {"scores": []}
@@ -143,5 +145,10 @@ for train_indexes, test_indexes in skf.split(df, y):
 
 # plt.savefig(f"real_results/cardio/{desc}.png")
 
-with open(f"cardio_cv/2cross_val_with_sss_cv{cv}_mixture.json", "w+") as f:
+print(
+    f"{np.mean(cross_val_scores['scores']).round(3)} ± {np.std(cross_val_scores['scores']).round(3)}"
+)
+
+
+with open(f"wbc_cv/2cross_val_with_sss_cv{cv}_mixture.json", "w+") as f:
     json.dump(cross_val_scores, f)

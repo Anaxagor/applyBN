@@ -13,8 +13,16 @@ class LocalOutlierScore(Score):
     def score(self, X):
         clf = LocalOutlierFactor(**self.params)
         clf.fit(X)
+        # the higher, the more abnormal
         return negative(clf.negative_outlier_factor_)
 
-        # clf = IsolationForest()
-        # clf.fit(X)
-        # return clf.decision_function(X)
+
+class IsolationForestScore(Score):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.params = kwargs
+
+    def score(self, X):
+        clf = IsolationForest(**self.params)
+        clf.fit(X)
+        return negative(clf.decision_function(X))

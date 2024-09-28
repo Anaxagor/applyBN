@@ -8,6 +8,7 @@ packages = [{include = "applybn"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+mpld3 = "^0.5.10"
 
 
 [build-system]
