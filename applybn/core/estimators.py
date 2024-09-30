@@ -132,3 +132,6 @@ class BNEstimator(BaseEstimator):
                           )
 
         return self
+    
+    def sample(self, N, evidence):
+        return self.bn.sample(n=N, evidence=evidence)
