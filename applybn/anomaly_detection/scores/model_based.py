@@ -1,4 +1,6 @@
 from applybn.anomaly_detection.scores.score import Score
+import pandas as pd
+import numpy as np
 
 
 class ModelBasedScore(Score):
@@ -7,4 +9,9 @@ class ModelBasedScore(Score):
         self.model = model
 
     def score(self, X):
-        return self.model.predict_proba(X)
+        probas = self.model.predict_proba(X)
+
+        if isinstance(probas, pd.Series):
+            return probas.values
+        if isinstance(probas, np.ndarray):
+            return probas

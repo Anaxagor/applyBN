@@ -86,8 +86,9 @@ class BNEstimator(BaseEstimator):
         # todo: turn into vectors? very slow
         probas = []
         for indx, row in X.iterrows():
+            anom_index = self.bn.distributions["y"]["classes"].index('1')
             try:
-                result = self.bn.get_dist("y", pvals=row.to_dict())[0]
+                result = self.bn.get_dist("y", pvals=row.to_dict())[int(anom_index)]
             except KeyError:
                 result = np.nan
             probas.append(result)
@@ -100,13 +101,13 @@ class BNEstimator(BaseEstimator):
                       node: Type[BaseNode] = DiscreteNode):
         if not self.bn.edges:
             # todo
-            raise Exception
+            raise Exception("bn.edges is empty")
         if not isinstance(y, pd.Series):
             # todo
-            raise Exception
+            raise Exception("y not a pd.Series")
         if not issubclass(node, BaseNode):
             # todo
-            raise Exception
+            raise Exception("node is not a subclass of BaseNode")
 
         normal_structure = self.bn.edges
         info = self.bn.descriptor

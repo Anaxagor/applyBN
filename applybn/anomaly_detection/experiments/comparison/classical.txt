@@ -1,0 +1,18 @@
+{'df_getter_args': <function get_ecoli at 0x0000000045416520>, 'score': <class 'applybn.anomaly_detection.scores.model_based.ModelBasedScore'>}
+(nan, nan)
+{'df_getter_args': <function get_ecoli at 0x0000000045416520>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.LocalOutlierScore'>}
+(0.57497, 0.3741)
+{'df_getter_args': <function get_ecoli at 0x0000000045416520>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.IsolationForestScore'>}
+(0.8, 0.4)
+{'df_getter_args': <function get_cardio at 0x0000000045415E40>, 'score': <class 'applybn.anomaly_detection.scores.model_based.ModelBasedScore'>}
+(0.06316, 0.05157)
+{'df_getter_args': <function get_cardio at 0x0000000045415E40>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.LocalOutlierScore'>}
+(0.57873, 0.06858)
+{'df_getter_args': <function get_cardio at 0x0000000045415E40>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.IsolationForestScore'>}
+(0.10526, 0.0)
+{'df_getter_args': <function get_wbc at 0x00000000453C6520>, 'score': <class 'applybn.anomaly_detection.scores.model_based.ModelBasedScore'>}
+(0.53333, 0.26667)
+{'df_getter_args': <function get_wbc at 0x00000000453C6520>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.LocalOutlierScore'>}
+(0.65855, 0.20678)
+{'df_getter_args': <function get_wbc at 0x00000000453C6520>, 'score': <class 'applybn.anomaly_detection.scores.proximity_based.IsolationForestScore'>}
+(0.26667, 0.3266)

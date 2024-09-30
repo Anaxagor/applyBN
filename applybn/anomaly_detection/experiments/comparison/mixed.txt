@@ -1,0 +1,15 @@
+# lof
+{'df_getter_args': <function get_ecoli at 0x00000000453F6480>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.72081, 0.37668)
+{'df_getter_args': <function get_cardio at 0x00000000453F5DA0>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.56381, 0.04898)
+{'df_getter_args': <function get_wbc at 0x00000000453B65C0>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.63492, 0.17936)
+
+# IF
+{'df_getter_args': <function get_ecoli at 0x0000000045446480>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.64667, 0.32221)
+{'df_getter_args': <function get_cardio at 0x0000000045445DA0>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.55768, 0.07517)
+{'df_getter_args': <function get_wbc at 0x0000000045476520>, 'score': <class 'applybn.anomaly_detection.scores.mixed.ODBPScore'>}
+(0.43849, 0.15631)
