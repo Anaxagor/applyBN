@@ -1,9 +1,7 @@
-# Import necessary libraries
 from data_iq import DataIQ_SKLearn
 from econml.dml import CausalForestDML
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
-import pandas as pd
 
 class ModelInterpreterEconML:
     """
