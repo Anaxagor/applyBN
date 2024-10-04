@@ -2,6 +2,8 @@
 
 ApplyBN is an open-source multi-purpose framework based on Bayesian networks and Causal networks.
 
+**The repository is currently work-in-progress**
+
 ## Key Features
 ### 1. Anomaly Detection in time-series and tabular data
 #### **Local Outlier Factor (LOF) Based Anomaly Detection**
