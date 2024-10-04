@@ -1,2 +1,2 @@
-from class_balance import BNClassBalance
-from model_testing import BNModelTesting
+from applybn.data_generation.class_balance import BNClassBalance
+from applybn.data_generation.model_testing import BNModelTesting

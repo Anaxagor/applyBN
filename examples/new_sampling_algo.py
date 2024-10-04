@@ -1,7 +1,7 @@
 from pandas import read_csv, concat
 from pathlib import Path
 from xgboost import XGBClassifier
-from get_bn import get_hybrid_bn
+from applybn.data_generation.get_bn import get_hybrid_bn
 from sklearn.metrics import f1_score
 from tqdm import tqdm
 

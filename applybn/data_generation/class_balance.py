@@ -1,4 +1,4 @@
-from base_class import DataGenerator
+from applybn.data_generation.base_class import DataGenerator
 from bamt.networks.base import BaseNetwork
 from pandas import DataFrame, concat
 from typing import Union
