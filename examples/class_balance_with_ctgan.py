@@ -165,4 +165,4 @@ for data in data_dir.iterdir():
             res['f1_test_ctgan_on_disbalanced'] += f1_test_ctgan_on_disbalanced
             res['f1_test_ctgan_on_population'] += f1_test_ctgan_on_population
 
-            pd.DataFrame(res).to_csv('synth_train_bn_balanced_classes_ctgan.csv')
+            pd.DataFrame(res).to_csv('ctgan_balancer.csv')

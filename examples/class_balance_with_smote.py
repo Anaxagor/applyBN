@@ -3,22 +3,16 @@ from pathlib import Path
 
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.preprocessing import LabelEncoder
-from get_bn import get_hybrid_bn
 from copy import copy
 
-from ctgan import CTGAN
 from imblearn.over_sampling import SMOTE
 
 DEBUG = False
@@ -160,4 +154,4 @@ for data in data_dir.iterdir():
             res['f1_test_smote_on_disbalanced'] += f1_test_smote_on_disbalanced
             res['f1_test_smote_on_population'] += f1_test_smote_on_population
 
-            pd.DataFrame(res).to_csv('synth_train_bn_balanced_classes_smote.csv')
+            pd.DataFrame(res).to_csv('class_balance_results/smote_balancer.csv')

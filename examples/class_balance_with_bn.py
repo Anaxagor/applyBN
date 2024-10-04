@@ -3,22 +3,17 @@ from pathlib import Path
 
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.preprocessing import LabelEncoder
-from get_bn import get_hybrid_bn
-from copy import copy
+from applybn.data_generation.class_balance import BNClassBalancer
 
-DEBUG = False
+from copy import copy
 
 
 def train_models(models, pd_data_train):
@@ -44,54 +39,36 @@ def evaluate_models(models, pd_data_test):
     return f1_test_res
 
 
-if DEBUG:
-    model_names = [
-        "Neural Net",
-        "XGB",
-    ]
+model_names = [
+    "Nearest Neighbors",
+    "Decision Tree",
+    "Random Forest",
+    "Neural Net",
+    "AdaBoost",
+    "Naive Bayes",
+    "QDA",
+    "XGB",
+]
 
-    data_names = [data.name[:-4] for data in Path("data").iterdir()]
+classifiers = [
+    KNeighborsClassifier(3),
+    DecisionTreeClassifier(max_depth=5, random_state=42),
+    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, random_state=42),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+    AdaBoostClassifier(algorithm="SAMME", random_state=42),
+    GaussianNB(),
+    QuadraticDiscriminantAnalysis(),
+    XGBClassifier(n_estimators=50)
+]
 
-    sample_lens = [200, 500, 1000, 3000]
-
-    initial_disbalance = [0.1, 0.5, 1.0]
-
-    classifiers = [
-        MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-        XGBClassifier(n_estimators=50),
-    ]
-else:
-    model_names = [
-        "Nearest Neighbors",
-        "Decision Tree",
-        "Random Forest",
-        "Neural Net",
-        "AdaBoost",
-        "Naive Bayes",
-        "QDA",
-        "XGB",
-    ]
-
-    classifiers = [
-        KNeighborsClassifier(3),
-        DecisionTreeClassifier(max_depth=5, random_state=42),
-        RandomForestClassifier(
-            max_depth=5, n_estimators=10, max_features=1, random_state=42
-        ),
-        MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-        AdaBoostClassifier(algorithm="SAMME", random_state=42),
-        GaussianNB(),
-        QuadraticDiscriminantAnalysis(),
-        XGBClassifier(n_estimators=50)
-    ]
-
-    sample_lens = [100, 200, 300, 400, 500, 1000, 2000, 3000]
-
-    initial_disbalance = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+sample_lens = [100, 200, 300, 400, 500, 1000, 2000, 3000]
+initial_disbalance = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 le = LabelEncoder()
+class_balancer = BNClassBalancer()
 
 data_dir = Path("data")
+
 res = {'model': [],
        'data_name': [],
        'sample_len': [],
@@ -126,21 +103,13 @@ for data in data_dir.iterdir():
                 test_sample_1 = pd_data_exp[pd_data_exp[pd_data_exp.columns[-1]] == 1].sample(class1_len)
 
                 disbalanced_data = pd.concat([test_sample_0, test_sample_1]).sample(frac=1).reset_index(drop=True)
-
-                bn_mix = get_hybrid_bn(disbalanced_data, mixtures=True)
-                class_len_diff = class0_len - class1_len
-
-                if class_len_diff > 0:
-                    class1 = bn_mix.sample(class_len_diff, evidence={disbalanced_data.columns[-1]: 1})[
-                        disbalanced_data.columns]
-                    synth_balanced_bn_mix = pd.concat([disbalanced_data, class1]).sample(frac=1).reset_index(drop=True)
-                    synth_balanced_bn_mix = synth_balanced_bn_mix.astype(disbalanced_data.dtypes.to_dict())
-                else:
-                    synth_balanced_bn_mix = disbalanced_data
+                class_balancer.fit(disbalanced_data)
+                synth_balanced_bn_mix = class_balancer.balance()
 
                 # standard learning pipeline with synthetically balanced data
                 split_i = int(0.8 * len(disbalanced_data))
-                modeled_train_sample, modeled_test_sample = disbalanced_data.iloc[:split_i], disbalanced_data.iloc[split_i:]
+                modeled_train_sample = disbalanced_data.iloc[:split_i]
+                modeled_test_sample = disbalanced_data.iloc[split_i:]
 
                 models_disbalanced = train_models(classifiers, modeled_train_sample)
                 f1_test_raw_disbalanced = evaluate_models(models_disbalanced, modeled_test_sample)
@@ -161,7 +130,7 @@ for data in data_dir.iterdir():
                 res['f1_test_bn_mix_on_disbalanced'] += f1_test_bn_mix_on_disbalanced
                 res['f1_test_bn_mix_on_population'] += f1_test_bn_mix_on_population
 
-                pd.DataFrame(res).to_csv('synth_train_bn_balanced_classes_real_plus_synth.csv')
+                # pd.DataFrame(res).to_csv('class_balance_results/bn_balancer.csv')
+
     except ValueError:
-        print("Something wrong")
-        continue
+        print(f"Something wrong with {data.name[:-4]}")
