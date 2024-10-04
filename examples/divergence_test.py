@@ -1,10 +1,8 @@
 import numpy as np
-from pandas import read_csv, concat, Series
+from pandas import read_csv, Series, DataFrame
 from pathlib import Path
 from xgboost import XGBClassifier
-from get_bn import get_hybrid_bn
-from sklearn.metrics import f1_score
-from tqdm import tqdm
+from applybn.data_generation.get_bn import get_hybrid_bn
 from sklearn.preprocessing import KBinsDiscretizer
 from scipy.spatial.distance import jensenshannon
 
@@ -34,6 +32,9 @@ def js_div_dataframes(d1, d2):
 
 data_dir = Path('data')
 clf = XGBClassifier(n_estimators=50)
+res = {'ds_name': [],
+       'js_divergence': []}
+
 
 for data_path in data_dir.iterdir():
     print(data_path.name)
@@ -45,4 +46,7 @@ for data_path in data_dir.iterdir():
     bn = get_hybrid_bn(real_data)
     synth_data = bn.sample(1000).astype(real_data.dtypes.to_dict())
 
-    print(js_div_dataframes(real_data, synth_data))
+    res['ds_name'].append(data_path.name[:-4])
+    res['js_divergence'].append(js_div_dataframes(real_data, synth_data))
+
+    DataFrame(res).to_csv('divergence_test_results/results.csv')
