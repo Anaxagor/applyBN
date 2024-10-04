@@ -41,23 +41,7 @@ def evaluate_models(models, pd_data_test):
     return f1_test_res
 
 
-if DEBUG:
-    model_names = [
-        "Neural Net",
-        "XGB",
-    ]
-
-    data_names = [data.name[:-4] for data in Path("data").iterdir()]
-
-    sample_lens = [200, 500, 1000, 3000]
-
-    initial_disbalance = [0.1, 0.5, 1.0]
-
-    classifiers = [
-        MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-        XGBClassifier(n_estimators=50),
-    ]
-else:
+def run():
     model_names = [
         "Nearest Neighbors",
         "Decision Tree",
@@ -86,72 +70,72 @@ else:
 
     initial_disbalance = [0.2, 0.4, 0.6, 0.8, 1.0]
 
-le = LabelEncoder()
+    le = LabelEncoder()
 
-data_dir = Path("data")
-res = {'model': [],
-       'data_name': [],
-       'sample_len': [],
-       'class_disbalance': [],
+    data_dir = Path("data")
+    res = {'model': [],
+           'data_name': [],
+           'sample_len': [],
+           'class_disbalance': [],
 
-       'f1_test_raw_disbalanced': [],
-       'f1_test_raw_population': [],
+           'f1_test_raw_disbalanced': [],
+           'f1_test_raw_population': [],
 
-       'f1_test_smote_on_disbalanced': [],
-       'f1_test_smote_on_population': [],
-       }
+           'f1_test_smote_on_disbalanced': [],
+           'f1_test_smote_on_population': [],
+           }
 
-for data in data_dir.iterdir():
-    if data.is_dir():
-        continue
+    for data in data_dir.iterdir():
+        if data.is_dir():
+            continue
 
-    print(data.name[:-4])
-    pd_data = pd.read_csv(data, index_col=0).sample(frac=1).reset_index(drop=True)
-    pd_data[pd_data.columns[-1]] = le.fit_transform(pd_data[pd_data.columns[-1]])
+        print(data.name[:-4])
+        pd_data = pd.read_csv(data, index_col=0).sample(frac=1).reset_index(drop=True)
+        pd_data[pd_data.columns[-1]] = le.fit_transform(pd_data[pd_data.columns[-1]])
 
-    pd_data_true_gen, pd_data_exp = pd_data.iloc[:len(pd_data) // 2], pd_data.iloc[len(pd_data) // 2:]
+        pd_data_true_gen, pd_data_exp = pd_data.iloc[:len(pd_data) // 2], pd_data.iloc[len(pd_data) // 2:]
 
-    for sample_len in sample_lens:
-        for disbalance in initial_disbalance:
-            print(sample_len, disbalance)
+        for sample_len in sample_lens:
+            for disbalance in initial_disbalance:
+                print(sample_len, disbalance)
 
-            class0_len = sample_len // 2
-            class1_len = int(class0_len * disbalance)
+                class0_len = sample_len // 2
+                class1_len = int(class0_len * disbalance)
 
-            test_sample_0 = pd_data_exp[pd_data_exp[pd_data_exp.columns[-1]] == 0].sample(class0_len)
-            test_sample_1 = pd_data_exp[pd_data_exp[pd_data_exp.columns[-1]] == 1].sample(class1_len)
+                test_sample_0 = pd_data_exp[pd_data_exp[pd_data_exp.columns[-1]] == 0].sample(class0_len)
+                test_sample_1 = pd_data_exp[pd_data_exp[pd_data_exp.columns[-1]] == 1].sample(class1_len)
 
-            disbalanced_data = pd.concat([test_sample_0, test_sample_1]).sample(frac=1).reset_index(drop=True)
+                disbalanced_data = pd.concat([test_sample_0, test_sample_1]).sample(frac=1).reset_index(drop=True)
 
-            sm = SMOTE(random_state=42)
-            X_res, y_res = sm.fit_resample(disbalanced_data[disbalanced_data.columns[:-1]],
-                                           disbalanced_data[disbalanced_data.columns[-1]])
+                sm = SMOTE(random_state=42)
+                X_res, y_res = sm.fit_resample(disbalanced_data[disbalanced_data.columns[:-1]],
+                                               disbalanced_data[disbalanced_data.columns[-1]])
 
-            X_res[disbalanced_data.columns[-1]] = y_res
+                X_res[disbalanced_data.columns[-1]] = y_res
 
-            synth_balanced_smote = X_res.astype(disbalanced_data.dtypes.to_dict())
+                synth_balanced_smote = X_res.astype(disbalanced_data.dtypes.to_dict())
 
-            # standard learning pipeline with synthetically balanced data
-            split_i = int(0.8 * len(disbalanced_data))
-            modeled_train_sample, modeled_test_sample = disbalanced_data.iloc[:split_i], disbalanced_data.iloc[split_i:]
+                # standard learning pipeline with synthetically balanced data
+                split_i = int(0.8 * len(disbalanced_data))
+                modeled_train_sample, modeled_test_sample = disbalanced_data.iloc[:split_i], disbalanced_data.iloc[split_i:]
 
-            models_disbalanced = train_models(classifiers, modeled_train_sample)
-            f1_test_raw_disbalanced = evaluate_models(models_disbalanced, modeled_test_sample)
-            f1_test_raw_population = evaluate_models(models_disbalanced, pd_data_true_gen)
+                models_disbalanced = train_models(classifiers, modeled_train_sample)
+                f1_test_raw_disbalanced = evaluate_models(models_disbalanced, modeled_test_sample)
+                f1_test_raw_population = evaluate_models(models_disbalanced, pd_data_true_gen)
 
-            models_smote_balanced = train_models(classifiers, synth_balanced_smote)
-            f1_test_smote_on_disbalanced = evaluate_models(models_smote_balanced, disbalanced_data)
-            f1_test_smote_on_population = evaluate_models(models_smote_balanced, pd_data_true_gen)
+                models_smote_balanced = train_models(classifiers, synth_balanced_smote)
+                f1_test_smote_on_disbalanced = evaluate_models(models_smote_balanced, disbalanced_data)
+                f1_test_smote_on_population = evaluate_models(models_smote_balanced, pd_data_true_gen)
 
-            res['model'] += model_names
-            res['data_name'] += [data.name[:-4]] * len(model_names)
-            res['sample_len'] += [sample_len] * len(model_names)
-            res['class_disbalance'] += [disbalance] * len(model_names)
+                res['model'] += model_names
+                res['data_name'] += [data.name[:-4]] * len(model_names)
+                res['sample_len'] += [sample_len] * len(model_names)
+                res['class_disbalance'] += [disbalance] * len(model_names)
 
-            res['f1_test_raw_disbalanced'] += f1_test_raw_disbalanced
-            res['f1_test_raw_population'] += f1_test_raw_population
+                res['f1_test_raw_disbalanced'] += f1_test_raw_disbalanced
+                res['f1_test_raw_population'] += f1_test_raw_population
 
-            res['f1_test_smote_on_disbalanced'] += f1_test_smote_on_disbalanced
-            res['f1_test_smote_on_population'] += f1_test_smote_on_population
+                res['f1_test_smote_on_disbalanced'] += f1_test_smote_on_disbalanced
+                res['f1_test_smote_on_population'] += f1_test_smote_on_population
 
-            pd.DataFrame(res).to_csv('class_balance_results/smote_balancer.csv')
+                pd.DataFrame(res).to_csv('class_balance_results/smote_balancer.csv')
