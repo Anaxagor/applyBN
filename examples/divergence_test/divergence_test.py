@@ -49,4 +49,4 @@ for data_path in data_dir.iterdir():
     res['ds_name'].append(data_path.name[:-4])
     res['js_divergence'].append(js_div_dataframes(real_data, synth_data))
 
-    # DataFrame(res).to_csv('divergence_test/results.csv')
+    DataFrame(res).to_csv('results/results.csv')
