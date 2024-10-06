@@ -1,6 +1,7 @@
 from applybn.data_generation.base_class import DataGenerator
 from pandas import DataFrame, concat
 from typing import Union
+from sklearn.exceptions import NotFittedError
 from applybn.core import copy_data
 
 
@@ -36,6 +37,9 @@ class BNClassBalancer(DataGenerator):
             balanced data
 
         """
+        if self.bn is None:
+            raise NotFittedError('BN must be fitted firstly')
+
         class_column = class_column if class_column is not None else disbalanced_data.columns[-1]
         classes_size = disbalanced_data.value_counts(disbalanced_data[class_column], sort=True)
 
