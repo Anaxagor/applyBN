@@ -3,18 +3,12 @@ from seaborn import lineplot
 from pandas import read_csv
 
 
-res_data_bn = read_csv('bn_balancer.csv', index_col=0)
-res_data_ctgan = read_csv('ctgan_balancer.csv', index_col=0)
-res_data_smote = read_csv('smote_balancer.csv', index_col=0)
-
-disbalance = 0.2
-
 for disbalance in [0.2, 0.4, 0.6, 0.8, 1.0]:
     for data_name in ['bank-marketing', 'california', 'credit']:
         for model in ['XGB', 'Nearest Neighbors', 'Neural Net', 'Naive Bayes']:
-            res_data_bn = read_csv('res_data/synth_train_bn_balanced_classes_new.csv', index_col=0)
-            res_data_ctgan = read_csv('res_data/ctgan_balancer.csv', index_col=0)
-            res_data_smote = read_csv('res_data/smote_balancer.csv', index_col=0)
+            res_data_bn = read_csv('bn_balancer.csv', index_col=0)
+            res_data_ctgan = read_csv('ctgan_balancer.csv', index_col=0)
+            res_data_smote = read_csv('smote_balancer.csv', index_col=0)
 
             res_data_bn = res_data_bn[(res_data_bn['class_disbalance'] == disbalance) & (res_data_bn['model'] == model)
                                       & (res_data_bn['data_name'] == data_name)]
@@ -51,5 +45,5 @@ for disbalance in [0.2, 0.4, 0.6, 0.8, 1.0]:
             plt.legend()
             plt.xlabel('Dataset size')
             plt.ylabel('F1 score')
-            plt.savefig(f'{model}_{data_name}_disbalance{disbalance}_real_plus_synth.png')
+            plt.savefig(f'pictures/{model}_{data_name}_disbalance{disbalance}_real_plus_synth.png')
             plt.clf()

@@ -72,7 +72,7 @@ def run():
 
     le = LabelEncoder()
 
-    data_dir = Path("data")
+    data_dir = Path("../data")
     res = {'model': [],
            'data_name': [],
            'sample_len': [],
@@ -144,4 +144,4 @@ def run():
                 res['f1_test_ctgan_on_disbalanced'] += f1_test_ctgan_on_disbalanced
                 res['f1_test_ctgan_on_population'] += f1_test_ctgan_on_population
 
-                pd.DataFrame(res).to_csv('class_balance/ctgan_balancer.csv')
+                pd.DataFrame(res).to_csv('results/exp1/ctgan_balancer.csv')

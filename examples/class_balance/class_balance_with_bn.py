@@ -68,7 +68,7 @@ def run():
     le = LabelEncoder()
     class_balancer = BNClassBalancer()
 
-    data_dir = Path("data")
+    data_dir = Path("../data")
 
     res = {'model': [],
            'data_name': [],
@@ -132,7 +132,7 @@ def run():
                     res['f1_test_bn_mix_on_disbalanced'] += f1_test_bn_mix_on_disbalanced
                     res['f1_test_bn_mix_on_population'] += f1_test_bn_mix_on_population
 
-                    pd.DataFrame(res).to_csv('class_balance/bn_balancer.csv')
+                    pd.DataFrame(res).to_csv('results/exp1/bn_balancer.csv')
 
         except ValueError:
             print(f"Something wrong with {data.name[:-4]}")
