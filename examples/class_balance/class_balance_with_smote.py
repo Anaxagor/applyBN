@@ -13,7 +13,7 @@ from sklearn.metrics import f1_score
 from sklearn.preprocessing import LabelEncoder
 from copy import copy
 
-from ctgan import CTGAN
+from imblearn.over_sampling import SMOTE
 
 DEBUG = False
 
@@ -81,8 +81,8 @@ def run():
            'f1_test_raw_disbalanced': [],
            'f1_test_raw_population': [],
 
-           'f1_test_ctgan_on_disbalanced': [],
-           'f1_test_ctgan_on_population': [],
+           'f1_test_smote_on_disbalanced': [],
+           'f1_test_smote_on_population': [],
            }
 
     for data in data_dir.iterdir():
@@ -107,19 +107,13 @@ def run():
 
                 disbalanced_data = pd.concat([test_sample_0, test_sample_1]).sample(frac=1).reset_index(drop=True)
 
-                ctgan = CTGAN(epochs=500)
-                ctgan.fit(disbalanced_data, discrete_columns=[disbalanced_data.columns[-1]])
+                sm = SMOTE(random_state=42)
+                X_res, y_res = sm.fit_resample(disbalanced_data[disbalanced_data.columns[:-1]],
+                                               disbalanced_data[disbalanced_data.columns[-1]])
 
-                class0 = ctgan.sample(len(pd_data_true_gen),
-                                      condition_column=disbalanced_data.columns[-1],
-                                      condition_value=0)[disbalanced_data.columns]
+                X_res[disbalanced_data.columns[-1]] = y_res
 
-                class1 = ctgan.sample(len(pd_data_true_gen),
-                                      condition_column=disbalanced_data.columns[-1],
-                                      condition_value=1)[disbalanced_data.columns]
-
-                synth_balanced_ctgan = pd.concat([class0, class1]).sample(frac=1).reset_index(drop=True)
-                synth_balanced_ctgan = synth_balanced_ctgan.astype(disbalanced_data.dtypes.to_dict())
+                synth_balanced_smote = X_res.astype(disbalanced_data.dtypes.to_dict())
 
                 # standard learning pipeline with synthetically balanced data
                 split_i = int(0.8 * len(disbalanced_data))
@@ -129,9 +123,9 @@ def run():
                 f1_test_raw_disbalanced = evaluate_models(models_disbalanced, modeled_test_sample)
                 f1_test_raw_population = evaluate_models(models_disbalanced, pd_data_true_gen)
 
-                models_ctgan_balanced = train_models(classifiers, synth_balanced_ctgan)
-                f1_test_ctgan_on_disbalanced = evaluate_models(models_ctgan_balanced, disbalanced_data)
-                f1_test_ctgan_on_population = evaluate_models(models_ctgan_balanced, pd_data_true_gen)
+                models_smote_balanced = train_models(classifiers, synth_balanced_smote)
+                f1_test_smote_on_disbalanced = evaluate_models(models_smote_balanced, disbalanced_data)
+                f1_test_smote_on_population = evaluate_models(models_smote_balanced, pd_data_true_gen)
 
                 res['model'] += model_names
                 res['data_name'] += [data.name[:-4]] * len(model_names)
@@ -141,7 +135,7 @@ def run():
                 res['f1_test_raw_disbalanced'] += f1_test_raw_disbalanced
                 res['f1_test_raw_population'] += f1_test_raw_population
 
-                res['f1_test_ctgan_on_disbalanced'] += f1_test_ctgan_on_disbalanced
-                res['f1_test_ctgan_on_population'] += f1_test_ctgan_on_population
+                res['f1_test_smote_on_disbalanced'] += f1_test_smote_on_disbalanced
+                res['f1_test_smote_on_population'] += f1_test_smote_on_population
 
-                pd.DataFrame(res).to_csv('class_balance_results/ctgan_balancer.csv')
+                pd.DataFrame(res).to_csv('class_balance/smote_balancer.csv')

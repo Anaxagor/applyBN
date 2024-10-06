@@ -132,7 +132,7 @@ def run():
                     res['f1_test_bn_mix_on_disbalanced'] += f1_test_bn_mix_on_disbalanced
                     res['f1_test_bn_mix_on_population'] += f1_test_bn_mix_on_population
 
-                    pd.DataFrame(res).to_csv('class_balance_results/bn_balancer.csv')
+                    pd.DataFrame(res).to_csv('class_balance/bn_balancer.csv')
 
         except ValueError:
             print(f"Something wrong with {data.name[:-4]}")
