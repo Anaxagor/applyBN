@@ -2,7 +2,7 @@
 
 ApplyBN is an open-source multi-purpose framework based on Bayesian networks and Causal networks.
 The main idea is to implement the main functions of data analysis based on understandable and interpretable algorithms of Bayesian networks and causal models.
-![photo_2024-10-06_11-56-53](https://github.com/user-attachments/assets/ad422e7b-e525-4a34-9774-08729c210005)
+![image](https://github.com/user-attachments/assets/996f8e5a-1742-4849-a64f-58b97a4cf17d)
 
 
 **The repository is currently work-in-progress**
