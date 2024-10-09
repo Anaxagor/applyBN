@@ -6,6 +6,7 @@ import pandas as pd
 
 from applybn.core import copy_data
 
+
 @copy_data
 def train_test_expand(data: Union[pd.DataFrame, np.ndarray], **parameters):
     """

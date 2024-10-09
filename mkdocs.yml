@@ -60,7 +60,12 @@ nav:
   - Getting Started: user-guide/getting-started.md
   - Installation: user-guide/installation.md
   - API Reference:
-      - logger: reference/logger.md
+      - logger: reference/core/logger.md
+      - exceptions: reference/core/exceptions.md
+      - data processing: reference/core/data_processing.md
+      - progress bar: reference/core/progress_bar.md
+      - explainers: reference/explainable/causal_explain/explainer.md
+      - SCM for NN importance: reference/explainable/scm_nn_importance/torch_nn_importance.md
 #extra:
 #  social:
 #    - icon: fontawesome/brands/github
