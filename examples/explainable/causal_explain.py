@@ -3,7 +3,6 @@ import pandas as pd
 import logging
 import matplotlib.pyplot as plt
 from catboost import CatBoostClassifier
-
 from applybn.explainable.causal_explain.data_iq import DataIQSKLearn
 from econml.dml import LinearDML, CausalForestDML
 from sklearn.ensemble import RandomForestRegressor, AdaBoostClassifier, RandomForestClassifier
@@ -11,6 +10,7 @@ import xgboost as xgb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(message)s')
+
 
 class ModelInterpreter:
     def __init__(self, X_train, y_train, X_test, y_test, n_estimators=10):
@@ -31,6 +31,7 @@ class ModelInterpreter:
         self.aleatoric_uncertainty_test = None
         self.feature_effects = None
         self.confidence_test_before_intervention = None
+        self.aleatoric_uncertainty_test_before_intervention = None
 
     def train_model(self, model):
         """
@@ -72,18 +73,45 @@ class ModelInterpreter:
             outcome = self.confidence_train
             covariates = self.X_train.drop(columns=[feature])
 
-            # Use EconML's LinearDML estimator for continuous treatment
             est = CausalForestDML(model_y=RandomForestRegressor(),
-                            model_t=RandomForestRegressor(),
-                            discrete_treatment=False,
-                            random_state=42)
+                                  model_t=RandomForestRegressor(),
+                                  discrete_treatment=False,
+                                  random_state=42)
             est.fit(Y=outcome, T=treatment, X=covariates)
             te = est.const_marginal_effect(covariates).mean()
             self.feature_effects[feature] = te
 
         # Convert to Series and sort
-        self.feature_effects = pd.Series(self.feature_effects).sort_values(ascending=False)
+        self.feature_effects = pd.Series(self.feature_effects).abs().sort_values(ascending=False)
         logging.info("Feature effects estimated.")
+
+    def plot_aleatoric_uncertainty(self, before_intervention=True):
+        """
+        Plot aleatoric uncertainty for test data before and after intervention.
+        """
+        if before_intervention:
+            plt.figure(figsize=(10, 5))
+            plt.hist(self.aleatoric_uncertainty_test_before_intervention, bins=30, alpha=0.5, label='Uncertainty Before Intervention')
+            plt.hist(self.aleatoric_uncertainty_test, bins=30, alpha=0.5, color='red', label='Uncertainty After Intervention')
+            plt.title("Test Data: Aleatoric Uncertainty Before and After Intervention")
+            plt.xlabel('Aleatoric Uncertainty')
+            plt.ylabel('Frequency')
+            plt.legend()
+            plt.show()
+
+    def plot_top_feature_effects(self, top_n=10):
+        """
+        Plot a bin plot of the top N most impactful features with their causal effects.
+        """
+        top_features = self.feature_effects.head(top_n)
+        plt.figure(figsize=(10, 8))
+        top_features.plot(kind='bar', color='skyblue')
+        plt.title(f"Top {top_n} Most Impactful Features by Causal Effect")
+        plt.xlabel("Features")
+        plt.ylabel("Causal Effect")
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        plt.show()
 
     def perform_intervention(self):
         """
@@ -98,24 +126,21 @@ class ModelInterpreter:
         # Compute confidence on test data before intervention
         self.compute_confidence_uncertainty_test()
         self.confidence_test_before_intervention = self.confidence_test.copy()
+        self.aleatoric_uncertainty_test_before_intervention = self.aleatoric_uncertainty_test.copy()
 
-        # Store original feature values in test data
         original_feature_values_test = self.X_test[top_features].copy()
 
-        # Plot original distributions and perform interventions on test data
         for feature in top_features:
             plt.figure(figsize=(10, 5))
             plt.hist(original_feature_values_test[feature], bins=30, alpha=0.5, label='Before Intervention')
 
-            # Perform intervention: replace feature values with uniform random values within original range
             logging.info(f"Performing intervention on '{feature}' in test data.")
             min_val = original_feature_values_test[feature].min()
             max_val = original_feature_values_test[feature].max()
-            np.random.seed(42)  # For reproducibility
+            np.random.seed(42)
             new_values = np.random.uniform(low=min_val, high=max_val, size=self.X_test.shape[0])
             self.X_test[feature] = new_values
 
-            # Plot new distribution of the feature on the same plot
             plt.hist(self.X_test[feature], bins=30, alpha=0.5, color='orange', label='After Intervention')
             plt.title(f"Test Data: Distribution of '{feature}' Before and After Intervention")
             plt.xlabel(feature)
@@ -123,18 +148,18 @@ class ModelInterpreter:
             plt.legend()
             plt.show()
 
-        # Compute confidence on test data after intervention
         self.compute_confidence_uncertainty_test()
 
-        # Plot confidence before and after intervention on test data
         plt.figure(figsize=(10, 5))
         plt.hist(self.confidence_test_before_intervention, bins=30, alpha=0.5, label='Confidence Before Intervention')
         plt.hist(self.confidence_test, bins=30, alpha=0.5, color='green', label='Confidence After Intervention')
-        plt.title(f"Test Data: Model Confidence Before and After Intervention onto {len(top_features)} features, RandomForest")
+        plt.title(f"Test Data: Model Confidence Before and After Intervention on {len(top_features)} features")
         plt.xlabel('Confidence')
         plt.ylabel('Frequency')
         plt.legend()
         plt.show()
+
+        self.plot_aleatoric_uncertainty()
 
         logging.info("Intervention complete. Observed changes in model confidence on test data.")
 
@@ -145,7 +170,9 @@ class ModelInterpreter:
         self.train_model(model=model)
         self.compute_confidence_uncertainty_train()
         self.estimate_feature_impact()
+        self.plot_top_feature_effects()
         self.perform_intervention()
+
 
 # Usage Example
 if __name__ == "__main__":
@@ -158,6 +185,7 @@ if __name__ == "__main__":
         X = pd.DataFrame(data.data, columns=data.feature_names)
         y = pd.Series(data.target)
         return train_test_split(X, y, test_size=0.2, random_state=42)
+
 
     # Load data
     X_train, X_test, y_train, y_test = load_data()
