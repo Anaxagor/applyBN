@@ -83,7 +83,7 @@ for train_indexes, test_indexes in skf.split(df, y):
     PROX_STEPS = 45
     # score = ModelBasedScore(estimator)
     score_proximity = LocalOutlierScore()
-    score = ODBPScore(estimator, score_proximity, encoding=encoding, proximity_steps=PROX_STEPS)
+    score = ODBPScore(score_proximity, encoding=encoding, proximity_steps=PROX_STEPS)
 
     detector = TabularDetector(estimator,
                                score=score,
@@ -96,7 +96,7 @@ for train_indexes, test_indexes in skf.split(df, y):
 
     # detector.estimator.bn.get_info(as_df=False)
 
-    outlier_scores = detector.detect(X_test, return_scores=True)
+    outlier_scores = detector.predict(X_test, return_scores=True)
 
     final = pd.DataFrame(np.hstack([outlier_scores.values.reshape(-1, 1), y_test.values.reshape(-1, 1).astype(int)]),
                          columns=["score", "anomaly"])
@@ -150,5 +150,5 @@ print(
 )
 
 
-with open(f"wbc_cv/2cross_val_with_sss_cv{cv}_mixture.json", "w+") as f:
-    json.dump(cross_val_scores, f)
+# with open(f"wbc_cv/2cross_val_with_sss_cv{cv}_mixture.json", "w+") as f:
+#     json.dump(cross_val_scores, f)

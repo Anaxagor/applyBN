@@ -8,12 +8,12 @@ from applybn.anomaly_detection.scores.mixed import ODBPScore
 
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
-# import seaborn as sns
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from bamt.preprocessors import Preprocessor
 from sklearn import preprocessing as pp
-from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, cross_val_score, permutation_test_score
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, cross_val_score
 from sklearn.model_selection import ParameterGrid
 
 from sklearn.metrics import f1_score, make_scorer
@@ -91,23 +91,25 @@ def body(df_getter, scorer_class, cv=10, verbose=False, additional_scorer=None):
 
 
 def get_cardio():
-    mat = scipy.io.loadmat('../../../../data/tabular_datasets/cardio.mat')
-    df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
-    df.columns = [f"feature_{i}" for i in range(df.shape[1])]
-
-    return df, y
+    # mat = scipy.io.loadmat('../data/tabular/cardio.mat')
+    # df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
+    # df.columns = [f"feature_{i}" for i in range(df.shape[1])]
+    df = pd.read_csv("../data/tabular/cardio.csv", index_col=0)
+    return df, pd.DataFrame(df.pop("anomaly"))
 
 
 def get_ecoli():
-    df = pd.read_csv("../../../../data/ecoli.csv")
+    df = pd.read_csv("../data/tabular/ecoli.csv")
     return df, pd.DataFrame(df.pop("y"))
 
 
 def get_wbc():
-    mat = scipy.io.loadmat('../../../../data/tabular_datasets/wbc.mat')
-    df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
-    df.columns = [f"feature_{i}" for i in range(df.shape[1])]
-    return df.iloc[:, :20], y
+    # mat = scipy.io.loadmat('../data/tabular/wbc.mat')
+    # df, y = pd.DataFrame(mat["X"]), pd.DataFrame(mat["y"])
+    # df.columns = [f"feature_{i}" for i in range(df.shape[1])]
+
+    df = pd.read_csv("../data/tabular/wbc.csv", index_col=0)
+    return df.iloc[:, :20], pd.DataFrame(df.pop("anomaly"))
 
 
 def learn_structure(df_getter: callable, full=False, return_encoding=False):
@@ -164,6 +166,10 @@ conditions = {"score": [mixed_score],
 
 grid = ParameterGrid(conditions)
 
-for params in grid:
-    print(params)
-    print(body(params["df_getter_args"], scorer_class=params["score"], additional_scorer=LocalOutlierScore()))
+df, y = get_ecoli()
+print(df)
+# df["anomaly"] = y.values.astype(int)
+# df.to_csv("../data/tabular/wbc.csv", index=False)
+# for params in grid:
+#     print(params)
+#     print(body(params["df_getter_args"], scorer_class=params["score"], additional_scorer=LocalOutlierScore()))

@@ -12,7 +12,7 @@ from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 import seaborn as sns
 from sklearn.metrics import f1_score
 
-df = pd.read_csv("../../../data/benchmarks/bank_data/bank_data.csv", index_col=0) \
+df = pd.read_csv("data/tabular/bank_data.csv", index_col=0) \
     .sample(3000, random_state=42, ignore_index=True)
 
 disc_cols = df.select_dtypes(include=["object"]).columns
