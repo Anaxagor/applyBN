@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 
+from applybn.explainable.causal_explain.data_iq import DataIQSKLearn
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -65,6 +67,14 @@ def load_and_preprocess_data():
 
     return X_processed, y, X
 
+
+def calculate_confidence_uncertainty(X, y, clf):
+    """Calculates model confidence and aleatoric uncertainty using Data-IQ."""
+    data_iq = DataIQSKLearn(X=X, y=y)
+    data_iq.on_epoch_end(clf=clf, iteration=10)
+    confidence = data_iq.confidence
+    aleatoric_uncertainty = data_iq.aleatoric
+    return confidence, aleatoric_uncertainty
 
 def perform_clustering(D, num_clusters):
     """Performs KMeans clustering on dataset D."""
