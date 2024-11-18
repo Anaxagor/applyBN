@@ -7,7 +7,8 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from econml.dml import LinearDML, CausalForestDML
 
 from applybn.explainable.causal_explain.data_iq import DataIQSKLearn
 
@@ -263,11 +264,44 @@ def estimate_causal_effects(D_c):
     return effects
 
 
+def estimate_causal_effects_on_continuous_outcomes(D_c, outcome_name):
+    """Estimates causal effects on continuous outcomes using econML's LinearDML or CausalForestDML."""
+    effects = {}
+    for concept in D_c.columns:
+        if concept != outcome_name:
+            # Define treatment and outcome
+            T = D_c[[concept]].values.ravel()
+            Y = D_c[outcome_name].values
+            # Control for other concepts
+            X_controls = D_c.drop(columns=[concept, outcome_name])
+
+            # Check if enough data is present for LinearDML; otherwise, switch to CausalForestDML
+            if X_controls.shape[0] > X_controls.shape[1] * 2:  # Simple heuristic for underdetermined matrix
+                est = LinearDML(
+                    model_y=RandomForestRegressor(),
+                    model_t=RandomForestRegressor(),
+                    linear_first_stages=False
+                )
+            else:
+                logger.info(f"Using CausalForestDML for {concept} due to high dimensionality in controls.")
+                est = CausalForestDML()
+
+            # Fit model and calculate treatment effect
+            est.fit(Y, T, X=X_controls)
+            treatment_effect = est.effect(X=X_controls)  # Explicitly pass X for effect estimation
+
+            # Store the mean effect for the current concept
+            effects[concept] = treatment_effect.mean()
+
+            logger.info(f"{concept}: Estimated Causal Effect = {treatment_effect.mean():.4f}")
+
+    return effects
+
 def main():
-    """Main function to run the CMIC algorithm."""
+    """Main function to run the CMIC algorithm with causal effect on continuous outcomes."""
     X, y, original_X = load_and_preprocess_data()
 
-    # D (discovery dataset) and N (natural dataset)
+    # Train/test split for discovery and natural datasets
     D, N = train_test_split(X, test_size=0.3, random_state=42, shuffle=False)
     D.reset_index(drop=False, inplace=True)
     N.reset_index(drop=False, inplace=True)
@@ -279,28 +313,36 @@ def main():
     # Generate concept space
     A = generate_concept_space(X, cluster_concepts)
 
+    # Train predictive model
     predictive_model = RandomForestClassifier(n_estimators=100, random_state=42)
     predictive_model.fit(X, y)
-    L_f = predictive_model.predict(X)
 
-    D_c = A.copy()
-    D_c["L_f"] = L_f
+    # Calculate confidence and uncertainty
+    confidence, uncertainty = calculate_confidence_uncertainty(X, y, predictive_model)
 
-    # Extract concept meanings
-    extract_concept_meanings(
-        D, cluster_concepts, original_data=original_X
-    )
+    # Prepare data for causal effect estimation
+    D_c_confidence = A.copy()
+    D_c_confidence["confidence"] = confidence
 
-    # Estimate causal effects
-    effects = estimate_causal_effects(D_c)
+    D_c_uncertainty = A.copy()
+    D_c_uncertainty["uncertainty"] = uncertainty
 
-    sorted_effects = sorted(effects.items(), key=lambda x: abs(x[1]), reverse=True)
-    logger.info(
-        "\nRanking of Concepts by Estimated Coefficient (Causal Effect) on L_f:"
-    )
-    for concept, effect in sorted_effects:
-        logger.info(f"{concept}: Causal Effect = {effect:.4f}")
+    # Estimate causal effects on confidence
+    effects_confidence = estimate_causal_effects_on_continuous_outcomes(D_c_confidence, outcome_name="confidence")
 
+    # Estimate causal effects on uncertainty
+    effects_uncertainty = estimate_causal_effects_on_continuous_outcomes(D_c_uncertainty, outcome_name="uncertainty")
+
+    # Log results
+    logger.info("\nRanking of Concepts by Estimated Coefficient (Causal Effect) on Confidence:")
+    sorted_effects_confidence = sorted(effects_confidence.items(), key=lambda x: abs(x[1]), reverse=True)
+    for concept, effect in sorted_effects_confidence:
+        logger.info(f"{concept}: Causal Effect on Confidence = {effect:.4f}")
+
+    logger.info("\nRanking of Concepts by Estimated Coefficient (Causal Effect) on Uncertainty:")
+    sorted_effects_uncertainty = sorted(effects_uncertainty.items(), key=lambda x: abs(x[1]), reverse=True)
+    for concept, effect in sorted_effects_uncertainty:
+        logger.info(f"{concept}: Causal Effect on Uncertainty = {effect:.4f}")
 
 if __name__ == "__main__":
     main()
