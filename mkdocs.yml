@@ -60,18 +60,18 @@ nav:
   - Getting Started: user-guide/getting-started.md
   - Installation: user-guide/installation.md
   - API Reference:
-      - core: reference/core/core.md
-          - logger: reference/core/logger.md
-          - exceptions: reference/core/exceptions.md
-          - progress_bar: reference/core/progress_bar.md
-      - feature_extraction: reference/feature_extraction.md
-      - feature_selection: reference/feature_selection.md
-      - bn_oversampling: reference/bn_oversampling.md
-      - outlier_detection: reference/outlier_detection/outlier_detection.md
-          - tabular_outlier_detection: reference/outlier_detection/tabular_outlier_detection.md
-          - time_series_outlier_detection: reference/outlier_detection/time_series_outlier_detection.md
-      - synthetic_data_generation: reference/synthetic_data_generation.md
-      - pipeline_creation: reference/pipeline_creation.md
+      - core: api/core/core.md
+          - logger: api/core/logger.md
+          - exceptions: api/core/exceptions.md
+          - progress_bar: api/core/progress_bar.md
+      - feature_extraction: api/feature_extraction.md
+      - feature_selection: api/feature_selection.md
+      - bn_oversampling: api/bn_oversampling.md
+      - outlier_detection: api/outlier_detection/outlier_detection.md
+          - tabular_outlier_detection: api/outlier_detection/tabular_outlier_detection.md
+          - time_series_outlier_detection: api/outlier_detection/time_series_outlier_detection.md
+      - synthetic_data_generation: api/synthetic_data_generation.md
+      - pipeline_creation: api/pipeline_creation.md
   - Examples:
       - Tabular Data: examples/tabular_data.md
       - Time Series Data: examples/time_series_data.md
