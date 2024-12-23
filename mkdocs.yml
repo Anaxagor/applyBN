@@ -63,16 +63,18 @@ nav:
     # Add concepts and theoretical background?
   
   - API Reference:
-      - core: api/core/core.md
+      - Core:
+          - api/core/core.md
           - logger: api/core/logger.md
           # - exceptions: api/core/exceptions.md
           # - progress_bar: api/core/progress_bar.md
-      - feature_extraction: api/feature_extraction.md
-      - feature_selection: api/feature_selection.md
-      - bn_oversampling: api/bn_oversampling.md
-      - outlier_detection: api/outlier_detection/outlier_detection.md
-          - tabular_outlier_detection: api/outlier_detection/tabular_outlier_detection.md
-          - time_series_outlier_detection: api/outlier_detection/time_series_outlier_detection.md
+      - Feature extraction: api/feature_extraction.md
+      - Feature selection: api/feature_selection.md
+      - BN oversampling: api/bn_oversampling.md
+      - Outlier detection:
+          - api/outlier_detection/outlier_detection.md
+          - Tabular outlier detection: api/outlier_detection/tabular_outlier_detection.md
+          - Time series outlier detection: api/outlier_detection/time_series_outlier_detection.md
       - synthetic_data_generation: api/synthetic_data_generation.md
       - pipeline_creation: api/pipeline_creation.md
   - Examples:

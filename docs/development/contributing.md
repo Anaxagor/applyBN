@@ -1,5 +1,21 @@
 # How to contribute
 
+## Fast Checklist
+
+- [ ] Fork the repository
+- [ ] Clone the repository
+- [ ] Create a new branch
+- [ ] Ensure sklearn compatibility
+- [ ] Write or update documentation with usage examples
+- [ ] Check documentation with serve
+- [ ] Write unittests
+- [ ] Run tests to ensure everything works
+- [ ] Commit your changes
+- [ ] Push your branch
+- [ ] Open a pull request
+
+## Contribution Guide
+
 We welcome contributions to the project. To contribute, please follow these steps:
 
 1. **Cloning the repository**
