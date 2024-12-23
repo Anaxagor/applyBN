@@ -73,8 +73,8 @@ nav:
       - BN oversampling: api/bn_oversampling.md
       - Outlier detection:
           - api/outlier_detection/outlier_detection.md
-          - Tabular outlier detection: api/outlier_detection/tabular_outlier_detection.md
-          - Time series outlier detection: api/outlier_detection/time_series_outlier_detection.md
+          - Tabular outlier detection: api/outlier_detection/tabular_outliers.md
+          - Time series outlier detection: api/outlier_detection/ts_outliers.md
       - Synthetic data generation: api/synthetic_data_generation.md
       - Pipeline creation: api/pipeline_creation.md
   - Examples:
