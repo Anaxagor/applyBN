@@ -2,6 +2,7 @@ from imblearn.over_sampling.base import BaseOverSampler
 
 
 class ImbalanceSynth(BaseOverSampler):
+    """Bayesian Network over-sampler."""
     # TODO: Implement Bayesian Network over-sampler using BaseOverSampler as reference
     # However, SamplerMixin, OneToOneFeatureMixin, BaseEstimator base classes from sklearn
     # may be more appropriate

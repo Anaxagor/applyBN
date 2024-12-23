@@ -4,6 +4,7 @@ import numpy as np
 
 
 class BNFeatureSelector(BaseEstimator, SelectorMixin):
+    """Bayesian Network feature selector."""
     # TODO: Implement Bayesian Network feature selector, use SelectorMixin as reference
     def fit(self, X, y=None):
         self.n_features_in_ = X.shape[1]

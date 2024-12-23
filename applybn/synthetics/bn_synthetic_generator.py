@@ -1,4 +1,5 @@
 class BNSyntheticGenerator:
+    """Bayesian Network Synthetic Data Generator."""
     def __init__(self):
         pass
 
