@@ -65,8 +65,8 @@ nav:
   - API Reference:
       - core: api/core/core.md
           - logger: api/core/logger.md
-          - exceptions: api/core/exceptions.md
-          - progress_bar: api/core/progress_bar.md
+          # - exceptions: api/core/exceptions.md
+          # - progress_bar: api/core/progress_bar.md
       - feature_extraction: api/feature_extraction.md
       - feature_selection: api/feature_selection.md
       - bn_oversampling: api/bn_oversampling.md
