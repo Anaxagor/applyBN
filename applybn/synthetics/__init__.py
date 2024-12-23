@@ -1,0 +1,1 @@
+from applybn.synthetics.bn_synthetic_generator import BNSyntheticGenerator
