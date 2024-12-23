@@ -56,9 +56,12 @@ theme:
     code: Roboto Mono
 
 nav:
-  - Home: index.md
-  - Getting Started: user-guide/getting-started.md
-  - Installation: user-guide/installation.md
+  - User Guide:
+    - index.md
+    - user-guide/getting-started.md
+    - user-guide/installation.md
+    # Add concepts and theoretical background?
+  
   - API Reference:
       - core: api/core/core.md
           - logger: api/core/logger.md
@@ -77,6 +80,10 @@ nav:
       - Time Series Data: examples/time_series_data.md
       - Synthetic Data Generation: examples/synthetic_data_generation.md
       - Pipeline Creation: examples/pipeline_creation.md
+
+  - Development and Contribution:
+      - development/contributing.md
+
 #extra:
 #  social:
 #    - icon: fontawesome/brands/github

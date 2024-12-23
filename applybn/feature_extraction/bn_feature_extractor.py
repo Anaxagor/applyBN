@@ -4,6 +4,7 @@ import numpy as np
 
 class BNFeatureGenerator(BaseEstimator, TransformerMixin):
     """Bayesian Network feature generator."""
+
     # TODO: Implement Bayesian Network feature generator, use TransformerMixin as reference
     def __init__(self, *, param=1):
         self.param = param

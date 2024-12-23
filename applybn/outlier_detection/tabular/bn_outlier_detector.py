@@ -4,6 +4,7 @@ import numpy as np
 
 class BNOutlierDetector(BaseEstimator, OutlierMixin):
     """Bayesian Network outlier detector."""
+
     # TODO: Implement Bayesian Network outlier detector using OutlierMixin as reference
     def __init__(self):
         pass

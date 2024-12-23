@@ -4,6 +4,7 @@ import numpy as np
 
 class BNTSOutlierDetector(BaseEstimator):
     """Bayesian Network timeseries outlier detector."""
+
     def __init__(self):
         pass
 

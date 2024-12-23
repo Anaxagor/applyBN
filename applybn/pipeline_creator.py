@@ -4,6 +4,7 @@ import importlib
 
 class PipelineCreator:
     """High-level Pipeline creator."""
+
     def __init__(self, config):
         self.config = config
         self.pipeline = None
