@@ -75,8 +75,8 @@ nav:
           - api/outlier_detection/outlier_detection.md
           - Tabular outlier detection: api/outlier_detection/tabular_outlier_detection.md
           - Time series outlier detection: api/outlier_detection/time_series_outlier_detection.md
-      - synthetic_data_generation: api/synthetic_data_generation.md
-      - pipeline_creation: api/pipeline_creation.md
+      - Synthetic data generation: api/synthetic_data_generation.md
+      - Pipeline creation: api/pipeline_creation.md
   - Examples:
       - Tabular Data: examples/tabular_data.md
       - Time Series Data: examples/time_series_data.md
@@ -98,5 +98,7 @@ markdown_extensions:
   - codehilite
   - footnotes
   - meta
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - toc:
       permalink: True
