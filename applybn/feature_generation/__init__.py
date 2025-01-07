@@ -1,0 +1,1 @@
+from applybn.feature_generation.bn_feature_generator import BNFeatureGenerator
