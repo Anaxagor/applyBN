@@ -24,7 +24,8 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
         num_classes (Optional[int]): Number of unique classes in the target variable.
     """
 
-    def __init__(self, known_structure: Optional[List[Tuple[str, str]]] = None):
+    def __init__(self, known_structure: Optional[List[Tuple[str, str]]] = None, random_seed: Optional[int] = None):
+
         """
         Initializes the BNFeatureGenerator.
 
@@ -36,6 +37,7 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
         self.bn: Optional[BayesianNetwork] = None
         self.variables: Optional[List[str]] = None
         self.num_classes: Optional[int] = None
+        self.random_seed = random_seed
 
     def fit(self, X: pd.DataFrame, y: Optional[pd.Series] = None,
             black_list: Optional[List[Tuple[str, str]]] = None) -> 'BNFeatureGenerator':
@@ -70,11 +72,11 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
                 # Fit the network with known structure
                 self.bn.fit(X, estimator=BayesianEstimator)
             except Exception as e:
-                logging.exception(f"Ошибка при обучении BayesianNetwork с известной структурой: {e}")
+                logging.exception(f"Error when training a Bayesian Network with a known structure: {e}")
                 raise
         else:
             # If the structure is unknown, use the constructor to build it
-            constructor = self._BayesianNetworkConstructor(X, black_list)
+            constructor = self._BayesianNetworkConstructor(X, black_list, self.random_seed)
             self.bn = constructor.construct_network()
 
         return self
@@ -138,7 +140,7 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
             black_list (Set[Tuple[str, str]]): Set of edges to be excluded from the network.
         """
 
-        def __init__(self, data: pd.DataFrame, black_list: Optional[List[Tuple[str, str]]] = None):
+        def __init__(self, data: pd.DataFrame, black_list: Optional[List[Tuple[str, str]]] = None, random_seed: Optional[int] = None):
             """
             Initializes the BayesianNetworkConstructor.
 
@@ -153,6 +155,7 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
             self.max_repository_size = 10
             self.initial_max_arcs = len(self.variables) // 2
             self.black_list = set(black_list) if black_list is not None else set()
+            self.random_generator = random.Random(random_seed)
 
         def is_valid_edge(self, edge: Tuple[str, str]) -> bool:
             """
@@ -181,7 +184,7 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
                 valid_parents = [p for p in used_nodes
                                  if self.is_valid_edge((p, child))]
                 if valid_parents:
-                    parent = random.Random(42).choice(valid_parents)
+                    parent = self.random_generator.choice(valid_parents)
                     edges.append((parent, child))
                     used_nodes.add(child)
                 else:
