@@ -228,17 +228,17 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
                 Exception: For any unexpected errors during modification.
             """
             edges = list(network.edges())
-            if not edges and random.choice(['add', 'delete', 'reverse']) != 'add':
+            if not edges and self.random_generator.choice(['add', 'delete', 'reverse']) != 'add':
                 # If no edges exist, we can only add
                 return network
             # Choose operation to perform
-            operation = random.choice(['add', 'delete', 'reverse'])
+            operation = self.random_generator.choice(['add', 'delete', 'reverse'])
             new_edges = edges.copy()
             try:
                 if operation == 'add' and len(edges) < max_arcs:
                     attempts = 0
                     while attempts < 10:
-                        node1, node2 = random.sample(self.variables, 2)
+                        node1, node2 = self.random_generator.sample(self.variables, 2)
                         new_edge = (node1, node2)
                         reverse_edge = (node2, node1)
                         # Check that the edge doesn't exist and isn't blacklisted
@@ -248,10 +248,10 @@ class BNFeatureGenerator(BaseEstimator, TransformerMixin):
                             break
                         attempts += 1
                 elif operation == 'delete' and edges:
-                    edge = random.choice(edges)
+                    edge = self.random_generator.choice(edges)
                     new_edges.remove(edge)
                 elif operation == 'reverse' and edges:
-                    edge = random.choice(edges)
+                    edge = self.random_generator.choice(edges)
                     reverse_edge = (edge[1], edge[0])
                     if self.is_valid_edge(reverse_edge):
                         new_edges.remove(edge)
