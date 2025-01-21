@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from applyBN.applybn.feature_extraction.bn_feature_extractor import BNFeatureGenerator
+from applybn.feature_extraction.bn_feature_extractor import BNFeatureGenerator
 
 @pytest.fixture
 def sample_data():

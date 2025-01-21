@@ -1,5 +1,5 @@
 import pytest
-from applyBN.applybn.feature_extraction.bn_feature_extractor import BNFeatureGenerator
+from applybn.feature_extraction.bn_feature_extractor import BNFeatureGenerator
 
 @pytest.fixture
 def known_structure():
