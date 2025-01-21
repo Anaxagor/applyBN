@@ -18,4 +18,4 @@ jobs:
     - name: Install pytest-cov
       run: pip install pytest-cov
     - name: Run tests and collect coverage
-      run: pytest -s tests
+      run: poetry run pytest -s tests
