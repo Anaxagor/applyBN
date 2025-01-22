@@ -4,12 +4,11 @@ from sklearn.base import BaseEstimator
 import pandas as pd
 import numpy as np
 import logging
-import itertools
 
 
-class NMIFeatureSelectior(BaseEstimator, SelectorMixin):
+class NMIFeatureSelector(BaseEstimator, SelectorMixin):
 
-  def __init__(self, threshhold = 0.5, bin_count=100, verboose=False):
+  def __init__(self, threshhold = 0.5, bin_count=100, verbose=False):
     '''
     This class performs feature selection based on Normalized Mutual Information (NMI).
     
@@ -21,7 +20,7 @@ class NMIFeatureSelectior(BaseEstimator, SelectorMixin):
     self.threshhold = threshhold
     self.bin_count = bin_count
     self.bin_labels = [i for i in range(self.bin_count)]
-    self.verboose = verboose
+    self.verbose = verbose
     self.entropy_map = dict()
 
 
@@ -75,48 +74,55 @@ class NMIFeatureSelectior(BaseEstimator, SelectorMixin):
     Args: 
         df - data frame to be cleaned.
     '''
-    clean_df = pd.DataFrame()
-    for col in df:
-      if pd.api.types.is_integer_dtype(df[col].dtype):
-        # integers can be discreticised this way, without binning
-        df_map = { l:i for i,l in enumerate(df[col].unique())}
-        clean_df[col] = df[col].map(df_map)
-      elif pd.api.types.is_numeric_dtype(df[col].dtype):
-        # discretisize to bin_count bins
-        clean_df[col] = pd.cut(df[col], bins=self.bin_count, labels=self.bin_labels, duplicates='drop')
-        clean_df[col] = clean_df[col].cat.add_categories(self.bin_count + 1).fillna(self.bin_count + 1)
+    def transform_column(col: pd.Series) -> pd.Series:
+      # Handle integer-type columns by enumerating unique values
+      if pd.api.types.is_integer_dtype(col.dtype):
+          mapping = {val: i for i, val in enumerate(col.unique())}
+          return col.map(mapping)
+      # Handle numeric columns (floats) using binning
+      elif pd.api.types.is_numeric_dtype(col.dtype):
+          binned = pd.cut(col, bins=self.bin_count, labels=self.bin_labels, duplicates='drop')
+          # Add an extra category for any values outside the bin ranges
+          return binned.cat.add_categories(self.bin_count + 1).fillna(self.bin_count + 1)
+      # Handle other column types (e.g., strings)
       else:
-        # pandas cut does not work with string features, this is done manually
-        # it is assumed that the user has removed the ID-like features, otherwise there will be a memory error later
-        df_map = { l:i for i,l in enumerate(df[col].unique())}
-        clean_df[col] = df[col].map(df_map)
+          mapping = {val: i for i, val in enumerate(col.unique())}
+          return col.map(mapping)
+    # Apply the transform_column function to each column in the DataFrame
+    clean_df = df.apply(transform_column)
     return clean_df
 
-  def fit(self, X: pd.DataFrame, y: pd.Series = None):    
+  def fit(self, X: pd.DataFrame, y: pd.Series = None):
     if y is None:
       return self
+    
+    if X.shape[0] != y.shape[0]:
+      raise ValueError
 
-    df = X
+    df = X.copy()
     df[y.name] = y
     target = y.name
-    self.initial_features = list(df.columns)
+    self.initial_features = list(X.columns)
 
     clean_df = self._prepare_dataset(df)
-    if self.verboose:
+    if self.verbose:
       logging.info('Dataset is ready')
+
     nmi_map = dict()
     self.entropy_map = dict()
     pre_features = []
-    for col in clean_df:
-      if col == target:
-        continue
-      if (col, target) not in nmi_map.keys():
-        nmi_map[(col, target)] = self._normalized_mutual_information(clean_df[col], clean_df[target])
-      nmi = nmi_map[(col, target)]
-      if nmi > self.threshhold:
-        pre_features.append(col)
+    def first_selection(col: pd.Series) -> pd.Series:
+      if col.name != target:
+        if (col.name, target) not in nmi_map.keys():
+          nmi_map[(col.name, target)] = self._normalized_mutual_information(col, clean_df[target])
+        nmi = nmi_map[(col.name, target)]
+        if nmi > self.threshhold:
+          pre_features.append(col.name)
+      return col
 
-    if self.verboose:
+    clean_df.apply(first_selection)
+
+    if self.verbose:
       logging.info(f'First selection done, {len(pre_features)} selected', pre_features)
 
     if len(pre_features) == 1:
@@ -129,29 +135,27 @@ class NMIFeatureSelectior(BaseEstimator, SelectorMixin):
       return self
 
     features = []
-    for idx1, col1 in enumerate(pre_features):
-      for idx2 in range(idx1, len(pre_features)):
-        col2 = pre_features[idx2]
-        if col1 == col2 or col1 == target or col2 == target:
-          continue
+    for col1 in pre_features:
+      def second_selection(col: pd.Series) -> pd.Series:
+        if col1 != col.name and col1 != target and col.name != target:
+          if (col1, col.name) not in nmi_map:
+            nmi_map[(col1, col.name)] = self._normalized_mutual_information(clean_df[col1], col)
 
-        if (col1, col2) not in nmi_map:
-          nmi_map[(col1, col2)] = self._normalized_mutual_information(clean_df[col1], clean_df[col2])
+          nmi_tg_1 = nmi_map[(col1, target)]
+          nmi_tg_2 = nmi_map[(col.name, target)]
+          nmi_col_12 = nmi_map[(col1, col.name)]
 
-        nmi_tg_1 = nmi_map[(col1, target)]
-        nmi_tg_2 = nmi_map[(col2, target)]
-        nmi_col_12 = nmi_map[(col1, col2)]
-
-        if (nmi_tg_1 > nmi_tg_2) and (nmi_col_12 > nmi_tg_2):
-          if col1 not in features:
-            features.append(col1)
-        
-    if self.verboose:
+          if (nmi_tg_1 > nmi_tg_2) and (nmi_col_12 > nmi_tg_2):
+            if col1 not in features:
+              features.append(col1)
+        return col
+      
+      clean_df.apply(second_selection)
+    
+    if self.verbose:
       logging.info(f'Second selection done, reduced: {len(pre_features)} -> {len(features)}')
 
     self.entropy_map.clear()
-    df = df.drop(y.name, axis=1)
-
     self.features_selected = features
     self.feature_names_in_ = X.columns
     self.n_features_in_ = X.shape[1]
