@@ -8,7 +8,8 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         """
         Initialize the causal feature selector.
 
-        :param n_bins: Number of bins for discretization or 'auto' for automatic selection.
+        Args:
+            n_bins: Number of bins for discretization or 'auto' for automatic selection.
         """
         self.n_bins = n_bins
 
