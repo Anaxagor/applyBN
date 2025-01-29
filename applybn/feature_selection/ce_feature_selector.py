@@ -96,12 +96,15 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         
         return X[:, self.support_]
 
-    def _discretize_data_iqr(self, data):
+    def _discretize_data_iqr(self, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Discretize data using the interquartile range (IQR) rule.
 
-        :param data: Data to discretize.
-        :return: Discretized data and bin edges.
+        Args:
+            data: Data to discretize.
+
+        Returns:
+            Discretized data and bin edges.
         """
         # Compute range and IQR
         R = np.ptp(data)
