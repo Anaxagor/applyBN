@@ -2,6 +2,7 @@ from sklearn.base import BaseEstimator
 from sklearn.feature_selection import SelectorMixin
 from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
+from typing import Union, Tuple
 
 class CausalFeatureSelector(BaseEstimator, SelectorMixin):
     def __init__(self, n_bins: Union[int, str] = 'auto'):
