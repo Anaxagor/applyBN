@@ -4,7 +4,7 @@ from sklearn.utils.validation import check_array, check_X_y
 import numpy as np
 
 class CausalFeatureSelector(BaseEstimator, SelectorMixin):
-    def __init__(self, n_bins='auto'):
+    def __init__(self, n_bins: Union[int, str] = 'auto'):
         """
         Initialize the causal feature selector.
 
