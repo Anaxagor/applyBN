@@ -137,13 +137,16 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         probabilities = value_counts / len(discretized_data)
         return -np.sum(probabilities[probabilities > 0] * np.log2(probabilities[probabilities > 0]))
 
-    def _conditional_entropy(self, X, Y):
+    def _conditional_entropy(self, X: np.ndarray, Y: np.ndarray) -> float:
         """
         Compute the conditional entropy H(Y|X).
 
-        :param X: Discretized features.
-        :param Y: Discretized target variable.
-        :return: Conditional entropy H(Y|X).
+        Args:
+            X: Discretized features.
+            Y: Discretized target variable.
+
+        Returns:
+            Conditional entropy H(Y|X).
         """
         unique_x = np.unique(X, axis=0)
         cond_entropy = 0
