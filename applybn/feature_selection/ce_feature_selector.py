@@ -75,28 +75,6 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         """
         return self.support_
 
-    def transform(self, X: np.ndarray) -> np.ndarray:
-        """
-        Apply the mask to the input data and return selected features.
-
-        Args:
-            X: Input feature matrix.
-
-        Returns:
-            Transformed feature matrix with only selected features.
-
-        Raises:
-            ValueError: If the number of features in X does not match the learned features.
-        """
-        # Validate the input array
-        X = check_array(X)
-
-        # Ensure the number of features matches the learned support mask
-        if X.shape[1] != len(self.support_):
-            raise ValueError("Number of features in X does not match the learned features.")
-        
-        return X[:, self.support_]
-
     def _discretize_data_iqr(self, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Discretize data using the interquartile range (IQR) rule.
