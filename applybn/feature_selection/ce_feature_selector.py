@@ -13,13 +13,16 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         """
         self.n_bins = n_bins
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'CausalFeatureSelector':
         """
         Fit the causal feature selector to the data.
 
-        :param X: Feature matrix (2D array or DataFrame).
-        :param y: Target variable (1D array).
-        :return: self
+        Args:
+            X: Feature matrix (2D array).
+            y: Target variable (1D array).
+
+        Returns:
+            self
         """
         # Validate inputs
         X, y = check_X_y(X, y)
