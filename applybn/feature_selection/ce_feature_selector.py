@@ -121,14 +121,17 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
 
         return discretized_data, bins
 
-    def _causal_effect(self, Xi, Y, other_features):
+    def _causal_effect(self, Xi: np.ndarray, Y: np.ndarray, other_features: np.ndarray) -> float:
         """
         Compute the causal effect of Xi on Y, controlling for other features.
 
-        :param Xi: Feature for which the causal effect is calculated.
-        :param Y: Target variable.
-        :param other_features: Matrix of other features to control for.
-        :return: Causal effect of Xi on Y.
+        Args:
+            Xi: Feature for which the causal effect is calculated.
+            Y: Target variable.
+            other_features: Matrix of other features to control for.
+
+        Returns:
+            Causal effect of Xi on Y.
         """
         Y_discretized = self._discretize_data_iqr(Y)[0]
         Xi_discretized = self._discretize_data_iqr(Xi)[0]
