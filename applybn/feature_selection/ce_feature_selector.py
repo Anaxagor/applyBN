@@ -126,12 +126,15 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         else:
             return self._entropy(Y_discretized) - self._conditional_entropy(Xi_discretized, Y_discretized)
 
-    def _entropy(self, discretized_data):
+    def _entropy(self, discretized_data: np.ndarray) -> float:
         """
         Compute the entropy of discretized data.
 
-        :param discretized_data: Discretized data.
-        :return: Entropy of the data.
+        Args:
+            discretized_data: Discretized data.
+
+        Returns:
+            Entropy of the data.
         """
         value_counts = np.unique(discretized_data, return_counts=True)[1]
         probabilities = value_counts / len(discretized_data)
