@@ -65,11 +65,12 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
 
         return selected_mask
 
-    def _get_support_mask(self):
+    def _get_support_mask(self) -> np.ndarray:
         """
         Required by SelectorMixin to return the mask of selected features.
 
-        :return: Boolean mask of selected features.
+        Returns:
+            Boolean mask of selected features.
         """
         return self.support_
 
