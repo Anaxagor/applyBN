@@ -33,13 +33,16 @@ class CausalFeatureSelector(BaseEstimator, SelectorMixin):
         self.support_ = self._select_features(X, y)
         return self
 
-    def _select_features(self, data, target):
+    def _select_features(self, data: np.ndarray, target: np.ndarray) -> np.ndarray:
         """
         Core logic for selecting features based on causal influence.
 
-        :param data: Feature matrix.
-        :param target: Target variable.
-        :return: Boolean mask of selected features.
+        Args:
+            data: Feature matrix.
+            target: Target variable.
+
+        Returns:
+            Boolean mask of selected features.
         """
         # Discretize target and features
         target_discretized = self._discretize_data_iqr(target)[0]
