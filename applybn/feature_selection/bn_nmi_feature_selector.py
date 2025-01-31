@@ -135,21 +135,21 @@ class NMIFeatureSelector(BaseEstimator, SelectorMixin):
       return self
 
     features = []
+    def second_selection(col: pd.Series) -> pd.Series:
+      if col1 != col.name and col1 != target and col.name != target:
+        if (col1, col.name) not in nmi_map:
+          nmi_map[(col1, col.name)] = self._normalized_mutual_information(clean_df[col1], col)
+
+        nmi_tg_1 = nmi_map[(col1, target)]
+        nmi_tg_2 = nmi_map[(col.name, target)]
+        nmi_col_12 = nmi_map[(col1, col.name)]
+
+        if (nmi_tg_1 > nmi_tg_2) and (nmi_col_12 > nmi_tg_2):
+          if col1 not in features:
+            features.append(col1)
+      return col
+
     for col1 in pre_features:
-      def second_selection(col: pd.Series) -> pd.Series:
-        if col1 != col.name and col1 != target and col.name != target:
-          if (col1, col.name) not in nmi_map:
-            nmi_map[(col1, col.name)] = self._normalized_mutual_information(clean_df[col1], col)
-
-          nmi_tg_1 = nmi_map[(col1, target)]
-          nmi_tg_2 = nmi_map[(col.name, target)]
-          nmi_col_12 = nmi_map[(col1, col.name)]
-
-          if (nmi_tg_1 > nmi_tg_2) and (nmi_col_12 > nmi_tg_2):
-            if col1 not in features:
-              features.append(col1)
-        return col
-      
       clean_df.apply(second_selection)
     
     if self.verbose:
