@@ -111,43 +111,32 @@ def main():
         X, y, predictive_model
     )
 
-    # Prepare data for causal effect estimation on continuous outcomes
+    # Prepare data for causal effect estimation
     D_c_confidence = A.copy()
     D_c_confidence["confidence"] = confidence
 
     D_c_uncertainty = A.copy()
     D_c_uncertainty["uncertainty"] = uncertainty
 
-    # Estimate causal effects on confidence
+    # Estimate causal effects
     effects_confidence = explainer.estimate_causal_effects_on_continuous_outcomes(
         D_c_confidence, outcome_name="confidence"
     )
 
-    # Estimate causal effects on uncertainty
     effects_uncertainty = explainer.estimate_causal_effects_on_continuous_outcomes(
         D_c_uncertainty, outcome_name="uncertainty"
     )
 
-    # Log results
-    logger.info(
-        "\nRanking of Concepts by Estimated Coefficient (Causal Effect) on Confidence:"
-    )
-    sorted_effects_confidence = sorted(
-        effects_confidence.items(), key=lambda x: abs(x[1]), reverse=True
-    )
-    for concept, effect in sorted_effects_confidence:
-        logger.info(f"{concept}: Causal Effect on Confidence = {effect:.4f}")
+    # Generate visualizations
+    explainer.plot_tornado(effects_confidence,
+                           title="Causal Effects on Model Confidence",
+                           figsize=(10, 8))
 
-    logger.info(
-        "\nRanking of Concepts by Estimated Coefficient (Causal Effect) on Uncertainty:"
-    )
-    sorted_effects_uncertainty = sorted(
-        effects_uncertainty.items(), key=lambda x: abs(x[1]), reverse=True
-    )
-    for concept, effect in sorted_effects_uncertainty:
-        logger.info(f"{concept}: Causal Effect on Uncertainty = {effect:.4f}")
+    explainer.plot_tornado(effects_uncertainty,
+                           title="Causal Effects on Model Uncertainty",
+                           figsize=(10, 8))
 
-    # (Optional) Extract concept meanings
+    # Extract and log concept meanings
     selected_features_per_concept = explainer.extract_concept_meanings(
         D, cluster_concepts, original_X
     )

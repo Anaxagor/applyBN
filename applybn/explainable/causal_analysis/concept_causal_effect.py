@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+import matplotlib.pyplot as plt
 from econml.dml import LinearDML, CausalForestDML
 from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score
@@ -350,3 +351,50 @@ class ConceptCausalExplainer:
                 )
 
         return effects
+
+    def plot_tornado(self, effects_dict, title="Tornado Plot", figsize=(10, 6)):
+        """Visualize causal effects using a tornado plot.
+
+        Args:
+            effects_dict (dict): Dictionary of {concept: effect_size}
+            title (str): Title for the plot
+            figsize (tuple): Figure dimensions
+        """
+        # Sort effects by absolute value
+        sorted_effects = sorted(effects_dict.items(),
+                                key=lambda x: abs(x[1]),
+                                reverse=True)
+
+        # Prepare data for plotting
+        concepts = [k for k, v in sorted_effects]
+        values = [v for k, v in sorted_effects]
+        colors = ['#4C72B0' if v > 0 else '#DD8452' for v in values]  # Blue for positive, orange for negative
+
+        # Create plot
+        plt.figure(figsize=figsize)
+        y_pos = np.arange(len(concepts))
+
+        # Create horizontal bars
+        bars = plt.barh(y_pos, values, color=colors)
+
+        # Add reference line and styling
+        plt.axvline(0, color='black', linewidth=0.8)
+        plt.yticks(y_pos, concepts)
+        plt.xlabel('Causal Effect Size')
+        plt.title(title)
+        plt.gca().invert_yaxis()  # Largest effect at top
+
+        # Add value labels
+        for bar, value in zip(bars, values):
+            if value > 0:
+                ha = 'left'
+                xpos = min(value + 0.01, max(values) * 0.95)
+            else:
+                ha = 'right'
+                xpos = max(value - 0.01, min(values) * 0.95)
+            plt.text(xpos, bar.get_y() + bar.get_height() / 2,
+                     f'{value:.3f}',
+                     ha=ha, va='center', color='black')
+
+        plt.tight_layout()
+        plt.show()
