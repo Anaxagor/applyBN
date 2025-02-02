@@ -1,10 +1,13 @@
 import copy
 import random
 import numpy as np
+import cv2
 import torch
 import torch.nn as nn
+from matplotlib import pyplot as plt
 
 from sklearn.linear_model import LinearRegression
+from sklearn.manifold import TSNE
 
 
 class CausalCNNExplainer:
@@ -302,3 +305,146 @@ class CausalCNNExplainer:
             else:
                 submodule = getattr(submodule, name)
         return submodule
+
+    def visualize_heatmap_on_input(
+            self,
+            image_tensor,
+            alpha=0.5,
+            cmap="viridis",
+            figsize=(15, 5)
+    ):
+        """Shows original image, heatmap, and overlay side-by-side."""
+        if image_tensor.dim() == 3:
+            image_tensor = image_tensor.unsqueeze(0)
+        image_tensor = image_tensor.to(self.device)
+
+        # Capture first-layer activations
+        first_layer_idx = 0
+        layer_name, layer = self.conv_layers[first_layer_idx]
+        activation = None
+
+        def hook(_, __, output):
+            nonlocal activation
+            activation = output.detach()
+
+        handle = layer.register_forward_hook(hook)
+        with torch.no_grad():
+            _ = self.model(image_tensor)
+        handle.remove()
+
+        # Convert importance scores to tensor
+        importances = torch.from_numpy(self.filter_importances[first_layer_idx]).to(activation.device)
+
+        # Compute weighted activations
+        activations = activation.squeeze(0)  # Remove batch dimension
+        weighted_activations = activations * importances[:, None, None]
+        heatmap = weighted_activations.sum(dim=0)
+
+        # Normalize and convert to numpy
+        heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+        heatmap_np = heatmap.cpu().numpy()
+
+        # Process input image (denormalize)
+        img = image_tensor.squeeze().cpu().numpy().transpose(1, 2, 0)
+        img = img * np.array([0.229, 0.224, 0.225]) + np.array([0.485, 0.456, 0.406])
+        img = np.clip(img, 0, 1)
+
+        # Resize heatmap to match input size
+        heatmap_resized = cv2.resize(heatmap_np, (img.shape[1], img.shape[0]))
+
+        # Create subplots
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=figsize)
+
+        # Original image
+        ax1.imshow(img)
+        ax1.set_title("Original Image")
+        ax1.axis("off")
+
+        # Heatmap alone
+        ax2.imshow(heatmap_resized, cmap=cmap)
+        ax2.set_title("Filter Importance Heatmap")
+        ax2.axis("off")
+
+        # Overlay
+        ax3.imshow(img)
+        ax3.imshow(heatmap_resized, alpha=alpha, cmap=cmap)
+        ax3.set_title("Heatmap Overlay")
+        ax3.axis("off")
+
+        plt.tight_layout()
+        plt.show()
+
+    def visualize_first_layer_filters(self, n_filters=16, figsize=(12, 8)):
+        """Visualizes weights of the first convolutional layer's filters."""
+        first_layer_idx = 0
+        layer_name, layer = self.conv_layers[first_layer_idx]
+
+        # Move weights to CPU for visualization
+        weights = layer.weight.detach().cpu().numpy()
+        importances = self.filter_importances[first_layer_idx]
+
+        n_filters = min(n_filters, weights.shape[0])
+        rows = (n_filters + 3) // 4
+
+        fig, axes = plt.subplots(rows, 4, figsize=figsize)
+        axes = axes.ravel()
+
+        for i in range(n_filters):
+            filter_weights = weights[i]
+            filter_weights = (filter_weights - filter_weights.min()) / (filter_weights.max() - filter_weights.min())
+
+            if filter_weights.shape[0] == 3:
+                filter_img = filter_weights.transpose(1, 2, 0)
+            else:
+                filter_img = filter_weights[0]
+                filter_img = np.stack([filter_img] * 3, axis=-1)
+
+            axes[i].imshow(filter_img)
+            axes[i].set_title(f"Filter {i}\nImportance: {importances[i]:.3f}")
+            axes[i].axis("off")
+
+        for j in range(n_filters, len(axes)):
+            axes[j].axis("off")
+
+        plt.tight_layout()
+        plt.show()
+
+    def visualize_filter_tsne(self, layer_idx=0, figsize=(8, 6)):
+        """Visualizes filter weights using t-SNE (for higher-dimensional layers)."""
+        layer_name, layer = self.conv_layers[layer_idx]
+        weights = layer.weight.detach().cpu().numpy()
+        n_filters = weights.shape[0]
+
+        # Flatten filter weights
+        flat_weights = weights.reshape(n_filters, -1)
+
+        # Reduce to 2D with t-SNE
+        tsne = TSNE(n_components=2, random_state=42)
+        embeddings = tsne.fit_transform(flat_weights)
+
+        # Color by importance
+        importances = self.filter_importances[layer_idx]
+        plt.figure(figsize=figsize)
+        plt.scatter(
+            embeddings[:, 0], embeddings[:, 1],
+            c=importances, cmap="viridis", alpha=0.7
+        )
+        plt.colorbar(label="Filter Importance")
+        plt.title(f"t-SNE of Filter Weights (Layer {layer_idx})")
+        plt.xlabel("t-SNE 1")
+        plt.ylabel("t-SNE 2")
+        plt.grid(True)
+        plt.show()
+
+    def plot_importance_distribution(self, figsize=(10, 6)):
+        """Plots boxplots of filter importance distributions across layers."""
+        layer_indices = sorted(self.filter_importances.keys())
+        importances = [self.filter_importances[idx] for idx in layer_indices]
+
+        plt.figure(figsize=figsize)
+        plt.boxplot(importances, labels=layer_indices)
+        plt.xlabel("Layer Index")
+        plt.ylabel("Filter Importance Score")
+        plt.title("Distribution of Filter Importances Across Layers")
+        plt.grid(True)
+        plt.show()

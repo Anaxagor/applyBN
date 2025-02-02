@@ -113,6 +113,22 @@ def main():
     filter_importances = explainer.get_filter_importances()
     print("Filter importances collected.")
 
+    # Visualizations (ADD THESE)
+    print("\nVisualizing insights...")
+
+    # 1. Input-space heatmap
+    sample_image, _ = next(iter(test_loader))
+    explainer.visualize_heatmap_on_input(sample_image[0])
+
+    # 2. First-layer filters
+    explainer.visualize_first_layer_filters(n_filters=16)
+
+    # 3. Importance distribution across layers
+    explainer.plot_importance_distribution()
+
+    # 4. t-SNE of filter weights (e.g., for layer 3)
+    explainer.visualize_filter_tsne(layer_idx=3)
+
     # Evaluate baseline accuracy
     baseline_acc = explainer.evaluate_model(explainer.model, test_loader)
     print(f"Baseline Accuracy: {baseline_acc*100:.2f}%")
