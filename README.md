@@ -1,6 +1,6 @@
-# ApplyBN
+# applybn
 
-ApplyBN is an open-source multi-purpose framework based on Bayesian networks and Causal networks.
+applybn is an open-source multi-purpose framework based on Bayesian networks and Causal networks.
 The main idea is to implement the main functions of data analysis based on understandable and interpretable algorithms of Bayesian networks and causal models.
 ![image](https://github.com/user-attachments/assets/996f8e5a-1742-4849-a64f-58b97a4cf17d)
 
@@ -23,7 +23,7 @@ The main idea is to implement the main functions of data analysis based on under
 
 ### 2. **Synthetic Data Generation**
    - **Class Imbalance Handling**: The framework includes methods for generating synthetic training data when class imbalance is detected in the dataset. Using hybrid Bayesian networks (with Gaussian mixture models), it generates balanced synthetic data, improving model training outcomes.
-   - **Synthetic Test Data Generation**: ApplyBN can generate synthetic test datasets, ensuring the generated samples are representative enough for proper model evaluation. This feature helps address issues when there is a lack of sufficient real test data, using a unique condition to ensure that ranking of model errors on synthetic and real data remains consistent.
+   - **Synthetic Test Data Generation**: applybn can generate synthetic test datasets, ensuring the generated samples are representative enough for proper model evaluation. This feature helps address issues when there is a lack of sufficient real test data, using a unique condition to ensure that ranking of model errors on synthetic and real data remains consistent.
 
 
 ### 3. **Feature Selection module**
@@ -33,11 +33,11 @@ The main idea is to implement the main functions of data analysis based on under
 ### 4. **Explainable Module**
 #### **Causal Analysis for Machine Learning Models**
    - **Analyzing Model Components**: A structural causal model (SCM) is built to analyze deep learning models, allowing for the pruning of unimportant parts (e.g., filters in CNNs) by evaluating their causal importance.
-   - **Explaining Data Impact on Predictions**: ApplyBN allows for causal inference between features and the model’s confidence scores. By calculating the **Average Causal Effect (ACE)**, it helps identify which features significantly influence model uncertainty, providing valuable insights for improving or debugging models.
+   - **Explaining Data Impact on Predictions**: applybn allows for causal inference between features and the model’s confidence scores. By calculating the **Average Causal Effect (ACE)**, it helps identify which features significantly influence model uncertainty, providing valuable insights for improving or debugging models.
 
 ## Work-in-Progress
 
-ApplyBN is actively under development, with key features currently being tested in dedicated branches. Contributions to these features are welcome:
+applybn is actively under development, with key features currently being tested in dedicated branches. Contributions to these features are welcome:
 
 - [Anomaly Detection Module](https://github.com/Anaxagor/applyBN/tree/anomaly-detection-module)
 - [Data Generation Module](https://github.com/Anaxagor/applyBN/tree/data-generation-module)
@@ -46,11 +46,11 @@ ApplyBN is actively under development, with key features currently being tested 
 
 ## Installation
 
-To get started with ApplyBN, clone the repository and install the required dependencies.
+To get started with applybn, clone the repository and install the required dependencies.
 
 ```bash
-git clone https://github.com/Anaxagor/applyBN.git
-cd applyBN
+git clone https://github.com/Anaxagor/applybn.git
+cd applybn
 pip install -r requirements.txt
 ```
 
@@ -60,10 +60,10 @@ API is WIP.
 
 ## Contributing
 
-Contributions to ApplyBN are welcome! If you’re interested in improving any of the features or testing new branches, please see the `CONTRIBUTING.md` (WIP) file for details.
+Contributions to applybn are welcome! If you’re interested in improving any of the features or testing new branches, please see the `CONTRIBUTING.md` (WIP) file for details.
 
 ## License
 
-ApplyBN is distributed under the MIT License. See the `LICENSE` file for more information.
+applybn is distributed under the MIT License. See the `LICENSE` file for more information.
 
-For additional documentation and technical details, visit our [documentation](https://anaxagor.github.io/applyBN/).
+For additional documentation and technical details, visit our [documentation](https://anaxagor.github.io/applybn/).
