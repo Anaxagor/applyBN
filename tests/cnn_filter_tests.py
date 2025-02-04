@@ -113,6 +113,3 @@ class TestCausalCNNExplainer(unittest.TestCase):
         accuracy = explainer.evaluate_model(self.mock_model, self.mock_loader)
         self.assertGreaterEqual(accuracy, 0.0, "Accuracy should be at least 0.")
         self.assertLessEqual(accuracy, 1.0, "Accuracy should be at most 1.")
-
-if __name__ == '__main__':
-    unittest.main()
