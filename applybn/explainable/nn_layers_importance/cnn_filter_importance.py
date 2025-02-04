@@ -1,14 +1,13 @@
 import copy
 import random
 from optparse import Option
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 import cv2
 import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
-from numba import Callable
 
 from sklearn.linear_model import LinearRegression
 from sklearn.manifold import TSNE
