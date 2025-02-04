@@ -191,11 +191,11 @@ class CausalCNNExplainer:
                 num_filters = len(importance)
                 self.filter_importances[idx] = np.ones(num_filters) / num_filters
 
-    def get_filter_importances(self):
+    def get_filter_importances(self) -> dict:
         """Returns the computed filter importances.
 
         Returns:
-            dict: A dictionary mapping layer index to a NumPy array of importance scores.
+            A dictionary mapping layer index to a NumPy array of importance scores.
         """
         return self.filter_importances
 

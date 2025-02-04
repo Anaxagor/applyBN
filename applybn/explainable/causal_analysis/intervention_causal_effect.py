@@ -1,9 +1,11 @@
 import logging
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from econml.dml import CausalForestDML
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import (
     RandomForestRegressor,
     RandomForestClassifier,
@@ -50,7 +52,7 @@ class InterventionCausalExplainer:
         self.confidence_test_before_intervention = None
         self.aleatoric_uncertainty_test_before_intervention = None
 
-    def train_model(self, model):
+    def train_model(self, model: Union[BaseEstimator, ClassifierMixin]):
         """Train the model on the training data.
 
         Args:
