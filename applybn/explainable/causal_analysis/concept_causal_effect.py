@@ -1,10 +1,12 @@
 import logging
+from typing import Union
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from econml.dml import LinearDML, CausalForestDML
+from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -24,16 +26,21 @@ class ConceptCausalExplainer:
     extract concept definitions, and estimate causal effects on different outcomes.
     """
 
-    def calculate_confidence_uncertainty(self, X, y, clf):
+    @staticmethod
+    def calculate_confidence_uncertainty(
+        X: pd.DataFrame,
+        y: Union[pd.Series, np.ndarray],
+        clf: Union[ClassifierMixin, BaseEstimator],
+    ) -> tuple:
         """Calculate model confidence and aleatoric uncertainty using DataIQ.
 
         Args:
-            X (pd.DataFrame): Feature matrix.
-            y (pd.Series or np.ndarray): Target labels or values.
-            clf (sklearn.base.BaseEstimator): A trained classifier that supports predict_proba or similar.
+            X: Feature matrix.
+            y: Target labels or values.
+            clf: A trained classifier that supports predict_proba or similar.
 
         Returns:
-            tuple: A tuple (confidence, aleatoric_uncertainty) containing:
+            A tuple (confidence, aleatoric_uncertainty) containing:
                 - confidence: Model confidence scores.
                 - aleatoric_uncertainty: Aleatoric uncertainty scores.
         """
@@ -43,34 +50,40 @@ class ConceptCausalExplainer:
         aleatoric_uncertainty = data_iq.aleatoric
         return confidence, aleatoric_uncertainty
 
-    def perform_clustering(self, D, num_clusters):
+    @staticmethod
+    def perform_clustering(D: pd.DataFrame, num_clusters: int) -> np.ndarray:
         """Perform KMeans clustering on the dataset.
 
         Args:
-            D (pd.DataFrame): The dataset for clustering (without index column).
-            num_clusters (int): The number of clusters to form.
+            D: The dataset for clustering (without index column).
+            num_clusters: The number of clusters to form.
 
         Returns:
-            np.ndarray: Array of cluster labels.
+            Array of cluster labels.
         """
         kmeans = KMeans(n_clusters=num_clusters, random_state=42)
         clusters = kmeans.fit_predict(D)
         return clusters
 
+    @staticmethod
     def evaluate_discriminability(
-        self, D, N, clusters, auc_threshold, k_min_cluster_size
-    ):
+        D: pd.DataFrame,
+        N: pd.DataFrame,
+        clusters: np.ndarray,
+        auc_threshold: float,
+        k_min_cluster_size: int,
+    ) -> list:
         """Evaluate discriminability of clusters using an SVM and AUC.
 
         Args:
-            D (pd.DataFrame): The discovery dataset, expected to include an 'index' column.
-            N (pd.DataFrame): The negative (natural) dataset, expected to include an 'index' column.
-            clusters (np.ndarray): Cluster labels from perform_clustering.
-            auc_threshold (float): A threshold for AUC to consider a cluster discriminative.
-            k_min_cluster_size (int): Minimum cluster size for evaluation.
+            D: The discovery dataset, expected to include an 'index' column.
+            N: The negative (natural) dataset, expected to include an 'index' column.
+            clusters: Cluster labels from perform_clustering.
+            auc_threshold: A threshold for AUC to consider a cluster discriminative.
+            k_min_cluster_size: Minimum cluster size for evaluation.
 
         Returns:
-            list: A list of dictionaries containing information about discriminative clusters.
+            A list of dictionaries containing information about discriminative clusters.
         """
         discriminative_clusters = []
         cluster_labels = np.unique(clusters)
@@ -111,28 +124,27 @@ class ConceptCausalExplainer:
 
     def extract_concepts(
         self,
-        D,
-        N,
-        auc_threshold=0.7,
-        k_min_cluster_size=100,
-        max_clusters=10,
-        max_iterations=10,
-    ):
+        D: pd.DataFrame,
+        N: pd.DataFrame,
+        auc_threshold: float = 0.7,
+        k_min_cluster_size: int = 100,
+        max_clusters: int = 10,
+        max_iterations: int = 10,
+    ) -> list:
         """Extract concepts from a discovery dataset.
 
         Clusters the dataset incrementally and looks for discriminative clusters.
 
         Args:
-            D (pd.DataFrame): Discovery dataset with an 'index' column.
-            N (pd.DataFrame): Negative (natural) dataset with an 'index' column.
-            auc_threshold (float, optional): Threshold for AUC to declare a cluster discriminative.
-                                             Defaults to 0.7.
-            k_min_cluster_size (int, optional): Minimum cluster size for evaluation. Defaults to 100.
-            max_clusters (int, optional): Maximum number of clusters to attempt. Defaults to 10.
-            max_iterations (int, optional): Maximum iterations for incremental clustering. Defaults to 10.
+            D: Discovery dataset with an 'index' column.
+            N: Negative (natural) dataset with an 'index' column.
+            auc_threshold: Threshold for AUC to declare a cluster discriminative.
+            k_min_cluster_size: Minimum cluster size for evaluation.
+            max_clusters: Maximum number of clusters to attempt.
+            max_iterations: Maximum iterations for incremental clustering.
 
         Returns:
-            list: A list of discriminative cluster dictionaries.
+            A list of discriminative cluster dictionaries.
         """
         svm_classifiers = []
         cluster_concepts = []
@@ -166,15 +178,16 @@ class ConceptCausalExplainer:
 
         return cluster_concepts
 
-    def generate_concept_space(self, X, cluster_concepts):
+    @staticmethod
+    def generate_concept_space(X: pd.DataFrame, cluster_concepts: list) -> pd.DataFrame:
         """Generate a binary concept space from the given cluster concepts.
 
         Args:
-            X (pd.DataFrame): The entire preprocessed dataset.
-            cluster_concepts (list): A list of discriminative cluster dictionaries.
+            X: The entire preprocessed dataset.
+            cluster_concepts: A list of discriminative cluster dictionaries.
 
         Returns:
-            pd.DataFrame: A DataFrame with binary columns indicating concept membership.
+            A DataFrame with binary columns indicating concept membership.
         """
         A = pd.DataFrame(index=X.index)
         for idx, concept in enumerate(cluster_concepts):
@@ -183,21 +196,25 @@ class ConceptCausalExplainer:
             A[f"Concept_{idx}"] = (A_i_scores > 0).astype(int)
         return A
 
+    @staticmethod
     def select_features_for_concept(
-        self, concept_data, other_data, features, original_data, lambda_reg=0.1
-    ):
+        concept_data: pd.DataFrame,
+        other_data: pd.DataFrame,
+        features: list,
+        original_data: pd.DataFrame,
+        lambda_reg: float = 0.1,
+    ) -> dict:
         """Select features for a concept and extract value ranges or categories.
 
         Args:
-            concept_data (pd.DataFrame): Data points belonging to the concept.
-            other_data (pd.DataFrame): Remaining data points not in the concept.
-            features (list): List of feature names in the preprocessed dataset.
-            original_data (pd.DataFrame): Original dataset (before one-hot encoding).
-            lambda_reg (float, optional): Regularization parameter to penalize variance or overlap.
-                                          Defaults to 0.1.
+            concept_data: Data points belonging to the concept.
+            other_data: Remaining data points not in the concept.
+            features: List of feature names in the preprocessed dataset.
+            original_data: Original dataset (before one-hot encoding).
+            lambda_reg: Regularization parameter to penalize variance or overlap.
 
         Returns:
-            dict: A dictionary mapping features to their type and range/categories.
+            A dictionary mapping features to their type and range/categories.
         """
         selected_features = {}
         for feature in features:
@@ -240,16 +257,18 @@ class ConceptCausalExplainer:
                         )
         return selected_features
 
-    def extract_concept_meanings(self, D, cluster_concepts, original_data):
+    def extract_concept_meanings(
+        self, D: pd.DataFrame, cluster_concepts: list, original_data: pd.DataFrame
+    ) -> dict:
         """Extract the meanings (dominant features) of each concept.
 
         Args:
-            D (pd.DataFrame): Preprocessed discovery dataset with an 'index' column.
-            cluster_concepts (list): List of discriminative cluster dictionaries.
-            original_data (pd.DataFrame): Original dataset (before one-hot encoding).
+            D: Preprocessed discovery dataset with an 'index' column.
+            cluster_concepts: List of discriminative cluster dictionaries.
+            original_data: Original dataset (before one-hot encoding).
 
         Returns:
-            dict: A dictionary mapping concept names to their selected features and values.
+            A dictionary mapping concept names to their selected features and values.
         """
         selected_features_per_concept = {}
         features = D.drop(columns="index").columns.tolist()
@@ -272,14 +291,15 @@ class ConceptCausalExplainer:
                     logger.info(f"  {feature}: categories {details['categories']}")
         return selected_features_per_concept
 
-    def estimate_causal_effects(self, D_c):
+    @staticmethod
+    def estimate_causal_effects(D_c: pd.DataFrame) -> dict:
         """Estimate the causal effect of each concept on a binary outcome.
 
         Args:
-            D_c (pd.DataFrame): DataFrame where columns are concepts plus the outcome 'L_f' (binary).
+            D_c: DataFrame where columns are concepts plus the outcome 'L_f' (binary).
 
         Returns:
-            dict: Dictionary of concept names to their estimated coefficients (logistic regression).
+            Dictionary of concept names to their estimated coefficients (logistic regression).
         """
         effects = {}
         outcome = "L_f"
@@ -306,15 +326,18 @@ class ConceptCausalExplainer:
                 )
         return effects
 
-    def estimate_causal_effects_on_continuous_outcomes(self, D_c, outcome_name):
+    @staticmethod
+    def estimate_causal_effects_on_continuous_outcomes(
+        D_c: pd.DataFrame, outcome_name: str
+    ) -> dict:
         """Estimate causal effects on continuous outcomes using econML's LinearDML or CausalForestDML.
 
         Args:
-            D_c (pd.DataFrame): DataFrame where columns include concepts and a continuous outcome.
-            outcome_name (str): Name of the continuous outcome column.
+            D_c: DataFrame where columns include concepts and a continuous outcome.
+            outcome_name: Name of the continuous outcome column.
 
         Returns:
-            dict: Dictionary of concept names to their estimated causal effect on the outcome.
+            Dictionary of concept names to their estimated causal effect on the outcome.
         """
         from sklearn.ensemble import RandomForestRegressor
 
@@ -352,23 +375,30 @@ class ConceptCausalExplainer:
 
         return effects
 
-    def plot_tornado(self, effects_dict, title="Tornado Plot", figsize=(10, 6)):
+    @staticmethod
+    def plot_tornado(
+        effects_dict: dict,
+        title: str = "Tornado Plot",
+        figsize: tuple[int, int] = (10, 6),
+    ):
         """Visualize causal effects using a tornado plot.
 
         Args:
-            effects_dict (dict): Dictionary of {concept: effect_size}
-            title (str): Title for the plot
-            figsize (tuple): Figure dimensions
+            effects_dict: Dictionary of {concept: effect_size}
+            title: Title for the plot
+            figsize: Figure dimensions
         """
         # Sort effects by absolute value
-        sorted_effects = sorted(effects_dict.items(),
-                                key=lambda x: abs(x[1]),
-                                reverse=True)
+        sorted_effects = sorted(
+            effects_dict.items(), key=lambda x: abs(x[1]), reverse=True
+        )
 
         # Prepare data for plotting
         concepts = [k for k, v in sorted_effects]
         values = [v for k, v in sorted_effects]
-        colors = ['#4C72B0' if v > 0 else '#DD8452' for v in values]  # Blue for positive, orange for negative
+        colors = [
+            "#4C72B0" if v > 0 else "#DD8452" for v in values
+        ]  # Blue for positive, orange for negative
 
         # Create plot
         plt.figure(figsize=figsize)
@@ -378,23 +408,28 @@ class ConceptCausalExplainer:
         bars = plt.barh(y_pos, values, color=colors)
 
         # Add reference line and styling
-        plt.axvline(0, color='black', linewidth=0.8)
+        plt.axvline(0, color="black", linewidth=0.8)
         plt.yticks(y_pos, concepts)
-        plt.xlabel('Causal Effect Size')
+        plt.xlabel("Causal Effect Size")
         plt.title(title)
         plt.gca().invert_yaxis()  # Largest effect at top
 
         # Add value labels
         for bar, value in zip(bars, values):
             if value > 0:
-                ha = 'left'
+                ha = "left"
                 xpos = min(value + 0.01, max(values) * 0.95)
             else:
-                ha = 'right'
+                ha = "right"
                 xpos = max(value - 0.01, min(values) * 0.95)
-            plt.text(xpos, bar.get_y() + bar.get_height() / 2,
-                     f'{value:.3f}',
-                     ha=ha, va='center', color='black')
+            plt.text(
+                xpos,
+                bar.get_y() + bar.get_height() / 2,
+                f"{value:.3f}",
+                ha=ha,
+                va="center",
+                color="black",
+            )
 
         plt.tight_layout()
         plt.show()

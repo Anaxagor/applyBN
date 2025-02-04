@@ -17,15 +17,22 @@ logger = logger_gen.get_logger()
 
 
 class InterventionCausalExplainer:
-    def __init__(self, X_train, y_train, X_test, y_test, n_estimators=10):
+    def __init__(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_test: pd.DataFrame,
+        y_test: pd.Series,
+        n_estimators=10,
+    ):
         """Initialize the ModelInterpreter with training and test data.
 
         Attributes:
-            X_train (pd.DataFrame): Training features.
-            y_train (pd.Series): Training labels.
-            X_test (pd.DataFrame): Test features.
-            y_test (pd.Series): Test labels.
-            n_estimators (int): Number of estimators for Data-IQ.
+            X_train: Training features.
+            y_train: Training labels.
+            X_test: Test features.
+            y_test: Test labels.
+            n_estimators: Number of estimators for Data-IQ.
         """
         self.X_train = X_train.copy()
         self.y_train = y_train.copy()
@@ -99,7 +106,7 @@ class InterventionCausalExplainer:
         )
         logging.info("Feature effects estimated.")
 
-    def plot_aleatoric_uncertainty(self, before_intervention=True):
+    def plot_aleatoric_uncertainty(self, before_intervention: bool = True):
         """Plot aleatoric uncertainty for test data before and after intervention."""
         if before_intervention:
             plt.figure(figsize=(10, 5))
@@ -122,11 +129,11 @@ class InterventionCausalExplainer:
             plt.legend()
             plt.show()
 
-    def plot_top_feature_effects(self, top_n=10):
+    def plot_top_feature_effects(self, top_n: int = 10):
         """Plot a bin plot of the top N most impactful features with their causal effects.
 
         Args:
-            top_n (int): Number of top features to plot.
+            top_n: Number of top features to plot.
         """
         top_features = self.feature_effects.head(top_n)
         plt.figure(figsize=(10, 8))

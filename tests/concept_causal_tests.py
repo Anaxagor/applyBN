@@ -10,10 +10,12 @@ from sklearn.cluster import KMeans
 # Import the class to test
 from applybn.explainable.causal_analysis import ConceptCausalExplainer
 
+
 @pytest.fixture
 def explainer():
     """Fixture to create a ConceptCausalExplainer instance."""
     return ConceptCausalExplainer()
+
 
 @pytest.fixture
 def sample_dataframe():
@@ -27,6 +29,7 @@ def sample_dataframe():
     }
     return pd.DataFrame(data)
 
+
 @pytest.fixture
 def sample_dataframe_negative():
     """Fixture to create a small secondary DataFrame for testing."""
@@ -38,21 +41,27 @@ def sample_dataframe_negative():
     }
     return pd.DataFrame(data)
 
+
 def test_perform_clustering(explainer, sample_dataframe, monkeypatch):
     """
     Test the perform_clustering method to check if clustering output makes sense.
     """
     # We'll mock KMeans to ensure repeatable results for a small dataset
     original_kmeans_init = KMeans.__init__
+
     def mocked_kmeans_init(self, n_clusters, random_state=42):
         original_kmeans_init(self, n_clusters=n_clusters, random_state=random_state)
+
     with monkeypatch.context() as m:
         m.setattr(KMeans, "__init__", mocked_kmeans_init)
 
         D = sample_dataframe.drop(columns="index")
         clusters = explainer.perform_clustering(D, num_clusters=2)
         assert len(clusters) == len(D), "Cluster array should match the number of rows"
-        assert np.unique(clusters).size <= 2, "We asked for 2 clusters, should not exceed that"
+        assert (
+            np.unique(clusters).size <= 2
+        ), "We asked for 2 clusters, should not exceed that"
+
 
 def test_extract_concepts(explainer, sample_dataframe, sample_dataframe_negative):
     """
@@ -61,14 +70,16 @@ def test_extract_concepts(explainer, sample_dataframe, sample_dataframe_negative
     """
     # For a small test, limit max_clusters and iteration to keep it quick
     concepts = explainer.extract_concepts(
-        sample_dataframe, sample_dataframe_negative,
+        sample_dataframe,
+        sample_dataframe_negative,
         auc_threshold=0.5,
         k_min_cluster_size=2,
         max_clusters=3,
-        max_iterations=2
+        max_iterations=2,
     )
     # This is a simplistic check; in real usage you'd validate the contents more thoroughly
     assert isinstance(concepts, list), "Should return a list of concept dictionaries"
+
 
 def test_generate_concept_space(explainer, sample_dataframe):
     """
@@ -87,10 +98,15 @@ def test_generate_concept_space(explainer, sample_dataframe):
             "auc_score": 0.8,
         }
     ]
-    A = explainer.generate_concept_space(sample_dataframe.drop(columns="index"), cluster_concepts)
+    A = explainer.generate_concept_space(
+        sample_dataframe.drop(columns="index"), cluster_concepts
+    )
     assert isinstance(A, pd.DataFrame), "Should return a pandas DataFrame"
-    assert A.shape[0] == len(sample_dataframe), "Concept space should have the same row count as X"
+    assert A.shape[0] == len(
+        sample_dataframe
+    ), "Concept space should have the same row count as X"
     assert "Concept_0" in A.columns, "Expected a column named 'Concept_0'"
+
 
 def test_select_features_for_concept(explainer, sample_dataframe):
     """
@@ -110,6 +126,7 @@ def test_select_features_for_concept(explainer, sample_dataframe):
     # The returned dictionary may be empty or may have some selected features depending on the scoring logic
     # This is a minimal structural check
 
+
 def test_extract_concept_meanings(
     explainer, sample_dataframe, sample_dataframe_negative
 ):
@@ -122,8 +139,11 @@ def test_extract_concept_meanings(
         {"cluster_label": 1, "cluster_indices": np.array([2, 3])},
     ]
     D = sample_dataframe.copy()
-    meanings = explainer.extract_concept_meanings(D, cluster_concepts, sample_dataframe_negative)
+    meanings = explainer.extract_concept_meanings(
+        D, cluster_concepts, sample_dataframe_negative
+    )
     assert isinstance(meanings, dict), "Should return a dictionary"
+
 
 def test_estimate_causal_effects(explainer):
     """
@@ -141,6 +161,7 @@ def test_estimate_causal_effects(explainer):
     assert isinstance(effects, dict), "Should return a dictionary of effects"
     # If statsmodels is installed, we expect a coefficient for each concept
     assert "Concept_0" in effects, "Expected a coefficient for Concept_0"
+
 
 def test_estimate_causal_effects_on_continuous_outcomes(explainer, monkeypatch):
     """
@@ -160,6 +181,7 @@ def test_estimate_causal_effects_on_continuous_outcomes(explainer, monkeypatch):
     # In a complete environment, you'd have econML installed and wouldn't patch the estimators.
     # For demonstration, mock them:
     from econml.dml import LinearDML, CausalForestDML
+
     mock_lineardml = MagicMock(spec=LinearDML)
     mock_lineardml.fit.return_value = None
     mock_lineardml.effect.return_value = np.array([0.1, 0.2, 0.3, 0.4])
@@ -182,6 +204,7 @@ def test_estimate_causal_effects_on_continuous_outcomes(explainer, monkeypatch):
             D_c=df, outcome_name="continuous_outcome"
         )
         assert isinstance(effects, dict), "Should return a dictionary"
+
 
 def test_plot_tornado(explainer):
     """

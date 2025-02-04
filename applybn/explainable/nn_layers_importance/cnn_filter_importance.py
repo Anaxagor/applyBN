@@ -1,10 +1,14 @@
 import copy
 import random
+from optparse import Option
+from typing import Optional
+
 import numpy as np
 import cv2
 import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
+from numba import Callable
 
 from sklearn.linear_model import LinearRegression
 from sklearn.manifold import TSNE
@@ -27,13 +31,13 @@ class CausalCNNExplainer:
         filter_importances (dict): Importance scores for the filters of each layer.
     """
 
-    def __init__(self, model: nn.Module, device: torch.device = None):
+    def __init__(self, model: nn.Module, device: Optional[torch.device] = None):
         """Initializes the CausalCNNExplainer object.
 
         Args:
-            model (nn.Module):
+            model:
                 A PyTorch CNN model.
-            device (torch.device, optional):
+            device:
                 The device (CPU or CUDA) for computations. Defaults to None (CPU if not specified).
         """
         if device is None:
@@ -84,16 +88,16 @@ class CausalCNNExplainer:
             self.filter_importances[idx] = np.zeros(num_filters)
 
     def collect_data(
-            self,
-            data_loader,
-            frobenius_norm_func=None,
+        self,
+        data_loader: torch.utils.data.DataLoader,
+        frobenius_norm_func: Optional[Callable] = None,
     ):
         """Collects output data for each convolutional layer.
 
         Args:
-            data_loader (torch.utils.data.DataLoader):
+            data_loader:
                 DataLoader for the dataset whose activations are collected.
-            frobenius_norm_func (callable, optional):
+            frobenius_norm_func:
                 A function to compute the Frobenius norm over feature maps.
                 Defaults to a built-in Frobenius norm if None is provided.
         """
@@ -195,15 +199,15 @@ class CausalCNNExplainer:
         """
         return self.filter_importances
 
-    def prune_filters_by_importance(self, percent):
+    def prune_filters_by_importance(self, percent: float) -> nn.Module:
         """Prunes filters with the lowest importance scores by zeroing out their weights.
 
         Args:
-            percent (float):
+            percent:
                 Percentage of filters to prune in each convolutional layer.
 
         Returns:
-            nn.Module: A copy of the model with pruned (zeroed) filters.
+            A copy of the model with pruned (zeroed) filters.
         """
         pruned_model = copy.deepcopy(self.model)
         filters_to_prune = {}
@@ -234,15 +238,15 @@ class CausalCNNExplainer:
 
         return pruned_model
 
-    def prune_random_filters(self, percent):
+    def prune_random_filters(self, percent: float) -> nn.Module:
         """Randomly prunes a specified percentage of filters by zeroing out their weights.
 
         Args:
-            percent (float):
+            percent:
                 Percentage of filters to prune in each convolutional layer.
 
         Returns:
-            nn.Module: A copy of the model with pruned (zeroed) filters.
+            A copy of the model with pruned (zeroed) filters.
         """
         pruned_model = copy.deepcopy(self.model)
 
@@ -264,17 +268,19 @@ class CausalCNNExplainer:
 
         return pruned_model
 
-    def evaluate_model(self, model, data_loader):
+    def evaluate_model(
+        self, model: nn.Module, data_loader: torch.utils.data.DataLoader
+    ) -> float:
         """Evaluates the accuracy of the model on a given DataLoader.
 
         Args:
-            model (nn.Module):
+            model:
                 The pruned or original model to evaluate.
-            data_loader (torch.utils.data.DataLoader):
+            data_loader:
                 The DataLoader to use for evaluation.
 
         Returns:
-            float: Accuracy of the model on the provided data (0 to 1).
+            Accuracy of the model on the provided data (0 to 1).
         """
         model.eval()
         model.to(self.device)
@@ -291,11 +297,20 @@ class CausalCNNExplainer:
 
         return correct / total
 
-    def _frobenius_norm(self, tensor):
-        """Default Frobenius norm function that averages over spatial dimensions."""
+    @staticmethod
+    def _frobenius_norm(tensor: torch.Tensor) -> torch.Tensor:
+        """Default Frobenius norm function that averages over spatial dimensions.
+
+        Args:
+            tensor: A 4D tensor (batch_size, channels, height, width).
+
+        Returns:
+            A 2D tensor (batch_size, channels) with the Frobenius norm computed over spatial dimensions.
+        """
         return torch.norm(tensor.view(tensor.size(0), tensor.size(1), -1), dim=2)
 
-    def _get_submodule(self, model, target):
+    @staticmethod
+    def _get_submodule(model: nn.Module, target: str) -> nn.Module:
         """Helper function to retrieve a submodule by hierarchical name."""
         names = target.split(".")
         submodule = model
@@ -307,11 +322,11 @@ class CausalCNNExplainer:
         return submodule
 
     def visualize_heatmap_on_input(
-            self,
-            image_tensor,
-            alpha=0.5,
-            cmap="viridis",
-            figsize=(15, 5)
+        self,
+        image_tensor: torch.Tensor,
+        alpha: float = 0.5,
+        cmap: str = "viridis",
+        figsize: tuple[int, int] = (15, 5),
     ):
         """Shows original image, heatmap, and overlay side-by-side."""
         if image_tensor.dim() == 3:
@@ -333,7 +348,9 @@ class CausalCNNExplainer:
         handle.remove()
 
         # Convert importance scores to tensor
-        importances = torch.from_numpy(self.filter_importances[first_layer_idx]).to(activation.device)
+        importances = torch.from_numpy(self.filter_importances[first_layer_idx]).to(
+            activation.device
+        )
 
         # Compute weighted activations
         activations = activation.squeeze(0)  # Remove batch dimension
@@ -374,7 +391,9 @@ class CausalCNNExplainer:
         plt.tight_layout()
         plt.show()
 
-    def visualize_first_layer_filters(self, n_filters=16, figsize=(12, 8)):
+    def visualize_first_layer_filters(
+        self, n_filters: int = 16, figsize: tuple[int, int] = (12, 8)
+    ):
         """Visualizes weights of the first convolutional layer's filters."""
         first_layer_idx = 0
         layer_name, layer = self.conv_layers[first_layer_idx]
@@ -391,7 +410,9 @@ class CausalCNNExplainer:
 
         for i in range(n_filters):
             filter_weights = weights[i]
-            filter_weights = (filter_weights - filter_weights.min()) / (filter_weights.max() - filter_weights.min())
+            filter_weights = (filter_weights - filter_weights.min()) / (
+                filter_weights.max() - filter_weights.min()
+            )
 
             if filter_weights.shape[0] == 3:
                 filter_img = filter_weights.transpose(1, 2, 0)
@@ -409,7 +430,9 @@ class CausalCNNExplainer:
         plt.tight_layout()
         plt.show()
 
-    def visualize_filter_tsne(self, layer_idx=0, figsize=(8, 6)):
+    def visualize_filter_tsne(
+        self, layer_idx: int = 0, figsize: tuple[int, int] = (8, 6)
+    ):
         """Visualizes filter weights using t-SNE (for higher-dimensional layers)."""
         layer_name, layer = self.conv_layers[layer_idx]
         weights = layer.weight.detach().cpu().numpy()
@@ -426,8 +449,7 @@ class CausalCNNExplainer:
         importances = self.filter_importances[layer_idx]
         plt.figure(figsize=figsize)
         plt.scatter(
-            embeddings[:, 0], embeddings[:, 1],
-            c=importances, cmap="viridis", alpha=0.7
+            embeddings[:, 0], embeddings[:, 1], c=importances, cmap="viridis", alpha=0.7
         )
         plt.colorbar(label="Filter Importance")
         plt.title(f"t-SNE of Filter Weights (Layer {layer_idx})")
@@ -436,7 +458,7 @@ class CausalCNNExplainer:
         plt.grid(True)
         plt.show()
 
-    def plot_importance_distribution(self, figsize=(10, 6)):
+    def plot_importance_distribution(self, figsize: tuple[int, int] = (10, 6)):
         """Plots boxplots of filter importance distributions across layers."""
         layer_indices = sorted(self.filter_importances.keys())
         importances = [self.filter_importances[idx] for idx in layer_indices]
